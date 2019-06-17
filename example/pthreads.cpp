@@ -19,8 +19,17 @@ void* thread2Routine(void*) {
 }
 
 int main() {
-  PThread thread1(thread1Routine), thread2(thread2Routine);
+  PThread thread1(thread1Routine);
   thread1.detach();
+
+  PThread thread2(thread2Routine, PThreadAttributes()
+      .setDetachState(JOINABLE)
+      .setScope(SYSTEM)
+      .setInheritScheduler(INHERIT)
+      .setSchedulingPolicy(OTHER)
+      .setSchedulingPriority(0)
+      .setGuardSize(4096)
+      .setStackSize(0x201000));
 
   PThread thread3([]() {
     sleep(3);
