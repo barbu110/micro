@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <stdexcept>
 #include <functional>
-#include <type_traits>
+#include <memory>
 #include <cstring>
 
 namespace microloop {
@@ -31,7 +31,13 @@ public:
 
   static PThread makeWithRet(std::function<void*()> routine);
 
-  void join();
+  template<typename T = void>
+  T* join() {
+    void* retValPtr;
+    int err = pthread_join(handle, &retValPtr);
+    if (err) throw PThreadException("pthread_join", err);
+    return static_cast<T*>(retValPtr);
+  }
 };
 
 }

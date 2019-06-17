@@ -25,11 +25,16 @@ int main() {
     std::cout << "Hello thread 3" << std::endl;
   });
 
-  PThread thread4 = PThread::makeWithRet([]() {
+  int test = 42;
+
+  PThread thread4 = PThread::makeWithRet([&]() {
     std::cout << "Hello thread 4" << std::endl;
-    return nullptr;
+    return &test;
   });
 
+  auto ptrToTest = thread4.join<int>();
   thread3.join();
+
+  std::cout << "Thread 4 returned " << *ptrToTest << std::endl;
   return 0;
 }

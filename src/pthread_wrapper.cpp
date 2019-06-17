@@ -36,9 +36,4 @@ PThread PThread::makeWithRet(std::function<void*()> routine) {
   return PThread(routineWrapperWithRet, stdFunPtr);
 }
 
-void PThread::join() {
-  int err = pthread_join(handle, nullptr);
-  if (err) throw PThreadException("pthread_join", err);
-}
-
 }
