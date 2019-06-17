@@ -1,5 +1,7 @@
-#include <pthread.h>
+// Copyright 2019 Stefan Silviu-Alexandru
+
 #include <unistd.h>
+#include <pthread_wrapper.h>
 #include <iostream>
 
 void* thread1Routine(void*) {
@@ -15,21 +17,19 @@ void* thread2Routine(void*) {
 }
 
 int main() {
-  pthread_t thread1, thread2;
-  if (int err = pthread_create(&thread1, nullptr, &thread1Routine, nullptr)) {
-    std::cerr << "pthread_create error code: " << err << std::endl;
-    return 1;
-  }
+  using namespace microloop;
+  PThread thread1(thread1Routine), thread2(thread2Routine);
 
-  if (int err = pthread_create(&thread2, nullptr, &thread2Routine, nullptr)) {
-    std::cerr << "pthread_create error code: " << err << std::endl;
-    return 1;
-  }
+  PThread thread3([]() {
+    sleep(3);
+    std::cout << "Hello thread 3" << std::endl;
+  });
 
-  if (int err = pthread_join(thread1, nullptr)) {
-    std::cerr << "pthread_join error code: " << err << std::endl;
-    return 2;
-  }
+  PThread thread4 = PThread::makeWithRet([]() {
+    std::cout << "Hello thread 4" << std::endl;
+    return nullptr;
+  });
 
+  thread3.join();
   return 0;
 }
