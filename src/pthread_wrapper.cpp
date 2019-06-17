@@ -68,6 +68,14 @@ void PThread::exit(void* retVal) noexcept {
   pthread_exit(retVal);
 }
 
+bool PThread::operator==(const PThread& other) const noexcept {
+  return pthread_equal(handle, other.handle);
+}
+
+bool PThread::operator!=(const PThread& other) const noexcept {
+  return !operator==(other);
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }

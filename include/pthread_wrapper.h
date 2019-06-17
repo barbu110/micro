@@ -117,6 +117,9 @@ public:
   }
 
   void detach();
+
+  bool operator==(const PThread& other) const noexcept;
+  bool operator!=(const PThread& other) const noexcept;
 };
 
 }

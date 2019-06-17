@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <pthread_wrapper.h>
 #include <iostream>
+#include <cassert>
 
 using namespace microloop;
 
@@ -43,9 +44,18 @@ int main() {
     return &test;
   });
 
+  PThread thread5 = PThread::makeWithRet([&]() {
+    std::cout << "Hello thread 5" << std::endl;
+    return &thread5;
+  });
+
   auto ptrToTest = thread4.join<int>();
   thread2.join();
   thread3.join();
+
+  auto thread5RetVal = thread5.join<PThread>();
+  assert(thread5 == *thread5RetVal);
+  assert(thread1 != thread2);
 
   std::cout << "Thread 4 returned " << *ptrToTest << std::endl;
   return 0;
