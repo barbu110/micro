@@ -9,6 +9,8 @@
 #include <memory>
 #include <cstring>
 
+#define noreturn __attribute((noreturn))
+
 namespace microloop {
 class PThreadException : public std::runtime_error {
   int error;
@@ -21,6 +23,7 @@ using ThreadRoutine = void*(void*);
 
 class PThread {
   pthread_t handle;
+  bool detached = false;
 
   PThread(ThreadRoutine targetRoutine, void* routineData);
 
@@ -31,6 +34,8 @@ public:
 
   static PThread makeWithRet(std::function<void*()> routine);
 
+  static noreturn void exit(void* retVal = nullptr) noexcept;
+
   template<typename T = void>
   T* join() {
     void* retValPtr;
@@ -38,6 +43,8 @@ public:
     if (err) throw PThreadException("pthread_join", err);
     return static_cast<T*>(retValPtr);
   }
+
+  void detach();
 };
 
 }

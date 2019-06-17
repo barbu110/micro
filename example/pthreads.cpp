@@ -4,6 +4,8 @@
 #include <pthread_wrapper.h>
 #include <iostream>
 
+using namespace microloop;
+
 void* thread1Routine(void*) {
   sleep(2);
   std::cout << "Hello thread 1" << std::endl;
@@ -17,8 +19,8 @@ void* thread2Routine(void*) {
 }
 
 int main() {
-  using namespace microloop;
   PThread thread1(thread1Routine), thread2(thread2Routine);
+  thread1.detach();
 
   PThread thread3([]() {
     sleep(3);
@@ -33,6 +35,7 @@ int main() {
   });
 
   auto ptrToTest = thread4.join<int>();
+  thread2.join();
   thread3.join();
 
   std::cout << "Thread 4 returned " << *ptrToTest << std::endl;

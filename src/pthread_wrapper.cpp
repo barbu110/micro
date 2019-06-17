@@ -36,4 +36,15 @@ PThread PThread::makeWithRet(std::function<void*()> routine) {
   return PThread(routineWrapperWithRet, stdFunPtr);
 }
 
+void PThread::detach() {
+  if (detached) throw std::logic_error("Attempt to detach already detached thread");
+  int err = pthread_detach(handle);
+  if (err) throw PThreadException("pthread_detach", err);
+  detached = true;
+}
+
+void PThread::exit(void* retVal) noexcept {
+  pthread_exit(retVal);
+}
+
 }
