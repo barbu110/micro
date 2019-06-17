@@ -9,6 +9,8 @@ add_library(microloop SHARED
     src/event_loop.cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_executable(microloop-usage
-    example/usage.cpp)
+add_executable(microloop-usage example/usage.cpp)
 target_link_libraries(microloop-usage microloop)
+
+add_executable(pthreads-example example/pthreads.cpp)
+target_link_libraries(pthreads-example pthread)
