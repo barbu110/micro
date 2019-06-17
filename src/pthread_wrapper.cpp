@@ -76,6 +76,12 @@ bool PThread::operator!=(const PThread& other) const noexcept {
   return !operator==(other);
 }
 
+PThread::PThread(pthread_t otherHandle) noexcept : handle(otherHandle) {}
+
+PThread PThread::self() noexcept {
+  return PThread(pthread_self());
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }

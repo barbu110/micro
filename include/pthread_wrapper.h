@@ -87,6 +87,9 @@ class PThread {
   pthread_t handle;
   bool detached = false;
 
+  /** Used for making shallow copies in @ref self. */
+  explicit PThread(pthread_t) noexcept;
+
   PThread(ThreadRoutine targetRoutine, void* routineData, const pthread_attr_t* attrs);
 
   template<
@@ -106,6 +109,7 @@ public:
   static PThread makeWithRet(std::function<void*()>);
   static PThread makeWithRet(std::function<void*()>, const PThreadAttributes&);
 
+  static PThread self() noexcept;
   static noreturn void exit(void* retVal = nullptr) noexcept;
 
   template<typename T = void>

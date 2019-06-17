@@ -45,6 +45,7 @@ int main() {
   });
 
   PThread thread5 = PThread::makeWithRet([&]() {
+    assert(thread5 == PThread::self());
     std::cout << "Hello thread 5" << std::endl;
     return &thread5;
   });
