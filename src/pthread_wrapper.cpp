@@ -133,6 +133,15 @@ sigset_t PThread::setSignalMask(int how, const sigset_t& set) const {
   return oldSet;
 }
 
+void PThread::setConcurrencyLevel(int level) {
+  int err = pthread_setconcurrency(level);
+  if (err) throw PThreadException("pthread_setconcurrency", err);
+}
+
+int PThread::getConcurrencyLevel() noexcept {
+  return pthread_getconcurrency();
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }

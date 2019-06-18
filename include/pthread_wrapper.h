@@ -176,6 +176,11 @@ public:
   /** @sa pthread_testcancel */
   static void testCancel() noexcept;
 
+  /** @sa pthread_setconcurrency */
+  static void setConcurrencyLevel(int);
+  /** @sa pthread_getconcurrency */
+  static int getConcurrencyLevel() noexcept;
+
   /**
    * Safer wrapper for @ref pthread_join.
    * @tparam T cast the thread's return value to a pointer of this type
