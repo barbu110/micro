@@ -111,6 +111,16 @@ void PThread::runWithCancellationCleanup(const std::function<void()>& codeRoutin
   pthread_cleanup_pop(1);
 }
 
+void PThread::testCancel() noexcept {
+  pthread_testcancel();
+}
+
+void PThread::yield() {
+  if (sched_yield()) {
+    throw PThreadException("sched_yield", errno);
+  }
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }

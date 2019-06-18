@@ -4,6 +4,7 @@
 #define MICROLOOP_PTHREAD_WRAPPER_H
 
 #include <pthread.h>
+#include <signal.h>
 #include <stdexcept>
 #include <functional>
 #include <type_traits>
@@ -150,6 +151,15 @@ public:
   /** Wrapper for @ref pthread_exit. */
   static noreturn void exit(void* retVal = nullptr) noexcept;
 
+  /**
+   * Have the current thread yield the processor. Intended for use with @ref AttrSchedulingPolicy.FIFO or
+   * @ref AttrSchedulingPolicy.ROUND_ROBIN.
+   *
+   * @ref pthread_yield is non-portable, but @ref sched_yield is, and the former is implemented using the latter on
+   * at least Linux.
+   */
+  static void yield();
+
   /** Gets and sets the cancellation state for the current thread. */
   static ThreadCancelState setCancelState(ThreadCancelState);
   /** Gets and sets the cancellation type for the current thread. */
@@ -162,6 +172,9 @@ public:
    * @sa pthread_cleanup_pop
    */
   static void runWithCancellationCleanup(const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine);
+
+  /** @sa pthread_testcancel */
+  static void testCancel() noexcept;
 
   /**
    * Safer wrapper for @ref pthread_join.
