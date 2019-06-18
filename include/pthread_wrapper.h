@@ -85,6 +85,16 @@ public:
   StackInfo getStackInfo() const;
 };
 
+enum ThreadCancelState : int {
+  ENABLED = PTHREAD_CANCEL_ENABLE,
+  DISABLED = PTHREAD_CANCEL_DISABLE
+};
+
+enum ThreadCancelType : int {
+  DEFERRED = PTHREAD_CANCEL_DEFERRED,
+  ASYNCHRONOUS = PTHREAD_CANCEL_ASYNCHRONOUS
+};
+
 using ThreadRoutine = void*(void*);
 
 /**
@@ -140,6 +150,11 @@ public:
   /** Wrapper for @ref pthread_exit. */
   static noreturn void exit(void* retVal = nullptr) noexcept;
 
+  /** Gets and sets the cancellation state for the current thread. */
+  static ThreadCancelState setCancelState(ThreadCancelState);
+  /** Gets and sets the cancellation type for the current thread. */
+  static ThreadCancelType setCancelType(ThreadCancelType);
+
   /**
    * Safer wrapper for @ref pthread_join.
    * @tparam T cast the thread's return value to a pointer of this type
@@ -154,6 +169,9 @@ public:
 
   /** Detaches this thread after construction. */
   void detach();
+
+  /** Queue a cancellation request to this thread. */
+  void cancel();
 
   bool operator==(const PThread& other) const noexcept;
   bool operator!=(const PThread& other) const noexcept;

@@ -82,6 +82,25 @@ PThread PThread::self() noexcept {
   return PThread(pthread_self());
 }
 
+ThreadCancelState PThread::setCancelState(ThreadCancelState newState) {
+  int oldState;
+  int err = pthread_setcancelstate(newState, &oldState);
+  if (err) throw PThreadException("pthread_setcancelstate", err);
+  return ThreadCancelState(oldState);
+}
+
+ThreadCancelType PThread::setCancelType(ThreadCancelType newType) {
+  int oldType;
+  int err = pthread_setcanceltype(newType, &oldType);
+  if (err) throw PThreadException("pthread_setcanceltype", err);
+  return ThreadCancelType(oldType);
+}
+
+void PThread::cancel() {
+  int err = pthread_cancel(handle);
+  if (err) throw PThreadException("pthread_cancel", err);
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }
