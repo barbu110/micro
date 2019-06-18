@@ -208,6 +208,9 @@ public:
   /** Get and set this thread's signal mask. */
   sigset_t setSignalMask(int how, const sigset_t& set) const;
 
+  /** Send the specified signal to this thread. */
+  void kill(int sig) const;
+
   bool operator==(const PThread& other) const noexcept;
   bool operator!=(const PThread& other) const noexcept;
 };

@@ -142,6 +142,11 @@ int PThread::getConcurrencyLevel() noexcept {
   return pthread_getconcurrency();
 }
 
+void PThread::kill(int sig) const {
+  int err = pthread_kill(handle, sig);
+  if (err) throw PThreadException("pthread_kill", err);
+}
+
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
   return &attr;
 }
