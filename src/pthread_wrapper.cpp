@@ -50,6 +50,11 @@ PThreadAttributes::~PThreadAttributes() {
   if (err) std::cerr << "(swallowed error in destructor) pthread_attr_destroy: " << err;
 }
 
+SpinLock::SpinLock(LockShareState shareState) {
+  int err = pthread_spin_init(&lock, shareState);
+  if (err) throw PThreadException("pthread_spin_init", err);
+}
+
 #pragma clang diagnostic pop
 
 PThread PThread::makeWithRet(std::function<void*()> routine) {
@@ -241,5 +246,25 @@ StackInfo PThreadAttributes::getStackInfo() const {
 
 #undef ATTR_SETTER
 #undef ATTR_GETTER
+
+SpinLock::~SpinLock() {
+  int err = pthread_spin_destroy(&lock);
+  if (err) std::cerr << "(swallowed error in destructor) pthread_spin_destroy: " << err;
+}
+
+void SpinLock::spinLock() {
+  int err = pthread_spin_lock(&lock);
+  if (err) throw PThreadException("pthread_spin_lock", err);
+}
+
+void SpinLock::unlock() {
+  int err = pthread_spin_unlock(&lock);
+  if (err) throw PThreadException("pthread_spin_unlock", err);
+}
+
+void SpinLock::tryLock() {
+  int err = pthread_spin_trylock(&lock);
+  if (err) throw PThreadException("pthread_spin_trylock", err);
+}
 
 }

@@ -15,8 +15,9 @@
 
 namespace microloop {
 class PThreadException : public std::runtime_error {
-  int error;
 public:
+  const int error;
+
   explicit PThreadException(const std::string& source, int error) :
       std::runtime_error(source + " error: " + strerror(error)), error(error) {}
 };
@@ -213,6 +214,26 @@ public:
 
   bool operator==(const PThread& other) const noexcept;
   bool operator!=(const PThread& other) const noexcept;
+};
+
+enum LockShareState : int {
+  PROCESS_PRIVATE = PTHREAD_PROCESS_PRIVATE,
+  PROCESS_SHARED = PTHREAD_PROCESS_SHARED
+};
+
+class SpinLock {
+  pthread_spinlock_t lock;
+public:
+
+  explicit SpinLock(LockShareState);
+
+  ~SpinLock();
+  SpinLock(const SpinLock&) = default;
+  SpinLock& operator=(const SpinLock&) = default;
+
+  void spinLock();
+  void unlock();
+  void tryLock();
 };
 
 }
