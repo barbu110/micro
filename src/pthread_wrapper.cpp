@@ -100,7 +100,7 @@ ThreadCancelType PThread::setCancelType(ThreadCancelType newType) {
   return ThreadCancelType(oldType);
 }
 
-void PThread::cancel() {
+void PThread::cancel() const {
   int err = pthread_cancel(handle);
   if (err) throw PThreadException("pthread_cancel", err);
 }
@@ -119,6 +119,18 @@ void PThread::yield() {
   if (sched_yield()) {
     throw PThreadException("sched_yield", errno);
   }
+}
+
+void PThread::queueSignal(int sig, sigval value) const {
+  int err = pthread_sigqueue(handle, sig, value);
+  if (err) throw PThreadException("pthread_sigqueue", err);
+}
+
+sigset_t PThread::setSignalMask(int how, const sigset_t& set) const {
+  sigset_t oldSet;
+  int err = pthread_sigmask(how, &set, &oldSet);
+  if (err) throw PThreadException("pthread_sigmask", err);
+  return oldSet;
 }
 
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {

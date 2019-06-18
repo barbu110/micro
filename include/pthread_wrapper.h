@@ -192,7 +192,16 @@ public:
   void detach();
 
   /** Queue a cancellation request to this thread. */
-  void cancel();
+  void cancel() const;
+
+  /**
+   * Queue a signal to this thread.
+   * @sa pthread_sigqueue
+   */
+  void queueSignal(int sig, union sigval value) const;
+
+  /** Get and set this thread's signal mask. */
+  sigset_t setSignalMask(int how, const sigset_t& set) const;
 
   bool operator==(const PThread& other) const noexcept;
   bool operator!=(const PThread& other) const noexcept;
