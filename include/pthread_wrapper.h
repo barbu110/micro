@@ -156,6 +156,14 @@ public:
   static ThreadCancelType setCancelType(ThreadCancelType);
 
   /**
+   * Run code with a cleanup routine pushed on the stack.
+   * @param codeRoutine the code to run on the cancellation area
+   * @param cleanupRoutine the actual cleanup code for @ref pthread_cleanup_push
+   * @sa pthread_cleanup_pop
+   */
+  static void runWithCancellationCleanup(const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine);
+
+  /**
    * Safer wrapper for @ref pthread_join.
    * @tparam T cast the thread's return value to a pointer of this type
    */

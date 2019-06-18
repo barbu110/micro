@@ -10,9 +10,13 @@ void* routineWrapperWithRet(void* target) {
   return (*static_cast<std::function<void*()>*>(target))();
 }
 
-void* routineWrapperNoRet(void* target) {
+void* routineWrapperNullRet(void* target) {
   (*static_cast<std::function<void()>*>(target))();
   return nullptr;
+}
+
+void routineWrapperNoRet(void* target) {
+  (*static_cast<std::function<void()>*>(target))();
 }
 
 namespace microloop {
@@ -31,10 +35,10 @@ PThread::PThread(ThreadRoutine routine, const PThreadAttributes& attrs) :
   PThread(routine, nullptr, attrs.getUnderlyingData()) {}
 
 PThread::PThread(std::function<void()> routine) :
-    PThread(routineWrapperNoRet, &routine, nullptr) {}
+    PThread(routineWrapperNullRet, &routine, nullptr) {}
 
 PThread::PThread(std::function<void()> routine, const PThreadAttributes& attrs) :
-    PThread(routineWrapperNoRet, &routine, attrs.getUnderlyingData()) {}
+    PThread(routineWrapperNullRet, &routine, attrs.getUnderlyingData()) {}
 
 PThreadAttributes::PThreadAttributes() {
   int err = pthread_attr_init(&attr);
@@ -99,6 +103,12 @@ ThreadCancelType PThread::setCancelType(ThreadCancelType newType) {
 void PThread::cancel() {
   int err = pthread_cancel(handle);
   if (err) throw PThreadException("pthread_cancel", err);
+}
+
+void PThread::runWithCancellationCleanup(const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine) {
+  pthread_cleanup_push(routineWrapperNoRet, reinterpret_cast<void*>(&cleanupRoutine));
+  codeRoutine();
+  pthread_cleanup_pop(1);
 }
 
 const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept {
