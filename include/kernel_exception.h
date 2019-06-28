@@ -1,5 +1,7 @@
 // Copyright 2019 Victor Barbu.
 
+#pragma once
+
 #include <stdexcept>
 
 #include <errno.h>
