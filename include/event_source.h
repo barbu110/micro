@@ -9,10 +9,11 @@ class EventLoop;
 class EventSource {
   friend class EventLoop;
 
-  public:
-  virtual ~EventSource() {}
+public:
+  virtual ~EventSource()
+  {}
 
-  protected:
+protected:
   virtual int get_fd() = 0;
 
   virtual void cleanup() = 0;

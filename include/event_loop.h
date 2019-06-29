@@ -10,10 +10,10 @@ namespace microloop {
 class EventSource;
 
 class EventLoop {
-  private:
+private:
   EventLoop();
 
-  public:
+public:
   static EventLoop* get_main();
 
   void add_event_source(EventSource* event_source);
@@ -22,7 +22,7 @@ class EventLoop {
 
   ~EventLoop();
 
-  private:
+private:
   int epollfd;
   std::map<int, EventSource*> event_sources;
 
@@ -31,5 +31,4 @@ class EventLoop {
 
 }  // namespace microloop
 
-#define MICROLOOP_TICK() \
-  microloop::EventLoop::get_main()->next_tick()
+#define MICROLOOP_TICK() microloop::EventLoop::get_main()->next_tick()
