@@ -6,18 +6,18 @@
 #include <iostream>
 #include <memory>
 
-void* routineWrapperWithRet(void* target)
+void* routine_wrapper_with_ret(void* target)
 {
   return (*static_cast<std::function<void*()>*>(target))();
 }
 
-void* routineWrapperNullRet(void* target)
+void* routine_wrapper_null_ret(void* target)
 {
   (*static_cast<std::function<void()>*>(target))();
   return nullptr;
 }
 
-void routineWrapperNoRet(void* target)
+void routine_wrapper_no_ret(void* target)
 {
   (*static_cast<std::function<void()>*>(target))();
 }
@@ -27,35 +27,35 @@ namespace microloop {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
 
-PThread::PThread(ThreadRoutine targetRoutine, void* routineData, const pthread_attr_t* attrs)
+Thread::Thread(ThreadRoutine target_routine, void* routine_data, const pthread_attr_t* attrs)
 {
-  int err = pthread_create(&handle, attrs, targetRoutine, routineData);
+  int err = pthread_create(&handle, attrs, target_routine, routine_data);
   if (err)
-    throw PThreadException("pthread_create", err);
+    throw ThreadException("pthread_create", err);
 }
 
-PThread::PThread(ThreadRoutine routine) : PThread(routine, nullptr, nullptr)
+Thread::Thread(ThreadRoutine routine) : Thread(routine, nullptr, nullptr)
 {}
 
-PThread::PThread(ThreadRoutine routine, const PThreadAttributes& attrs) :
-    PThread(routine, nullptr, attrs.getUnderlyingData())
+Thread::Thread(ThreadRoutine routine, const ThreadAttributes& attrs) :
+    Thread(routine, nullptr, attrs.underlying_data())
 {}
 
-PThread::PThread(std::function<void()> routine) : PThread(routineWrapperNullRet, &routine, nullptr)
+Thread::Thread(std::function<void()> routine) : Thread(routine_wrapper_null_ret, &routine, nullptr)
 {}
 
-PThread::PThread(std::function<void()> routine, const PThreadAttributes& attrs) :
-    PThread(routineWrapperNullRet, &routine, attrs.getUnderlyingData())
+Thread::Thread(std::function<void()> routine, const ThreadAttributes& attrs) :
+    Thread(routine_wrapper_null_ret, &routine, attrs.underlying_data())
 {}
 
-PThreadAttributes::PThreadAttributes()
+ThreadAttributes::ThreadAttributes()
 {
   int err = pthread_attr_init(&attr);
   if (err)
-    throw PThreadException("pthread_attr_init", err);
+    throw ThreadException("pthread_attr_init", err);
 }
 
-PThreadAttributes::~PThreadAttributes()
+ThreadAttributes::~ThreadAttributes()
 {
   int err = pthread_attr_destroy(&attr);
   if (err)
@@ -66,136 +66,136 @@ SpinLock::SpinLock(LockShareState shareState)
 {
   int err = pthread_spin_init(&lock, shareState);
   if (err)
-    throw PThreadException("pthread_spin_init", err);
+    throw ThreadException("pthread_spin_init", err);
 }
 
 #pragma clang diagnostic pop
 
-PThread PThread::makeWithRet(std::function<void*()> routine)
+Thread Thread::make_with_ret(std::function<void*()> routine)
 {
-  return PThread(routineWrapperWithRet, &routine, nullptr);
+  return Thread(routine_wrapper_with_ret, &routine, nullptr);
 }
 
-PThread PThread::makeWithRet(std::function<void*()> routine, const PThreadAttributes& attrs)
+Thread Thread::make_with_ret(std::function<void*()> routine, const ThreadAttributes& attrs)
 {
-  return PThread(routineWrapperWithRet, &routine, attrs.getUnderlyingData());
+  return Thread(routine_wrapper_with_ret, &routine, attrs.underlying_data());
 }
 
-void PThread::detach()
+void Thread::detach()
 {
   // Avoid unspecified behaviour
   if (detached)
     throw std::logic_error("Attempt to detach already detached thread");
   int err = pthread_detach(handle);
   if (err)
-    throw PThreadException("pthread_detach", err);
+    throw ThreadException("pthread_detach", err);
   detached = true;
 }
 
-void PThread::exit(void* retVal) noexcept
+void Thread::exit(void* ret_val) noexcept
 {
-  pthread_exit(retVal);
+  pthread_exit(ret_val);
 }
 
-bool PThread::operator==(const PThread& other) const noexcept
+bool Thread::operator==(const Thread& other) const noexcept
 {
   return pthread_equal(handle, other.handle);
 }
 
-bool PThread::operator!=(const PThread& other) const noexcept
+bool Thread::operator!=(const Thread& other) const noexcept
 {
   return !operator==(other);
 }
 
-PThread::PThread(pthread_t otherHandle) noexcept : handle(otherHandle)
+Thread::Thread(pthread_t other_handle) noexcept : handle(other_handle)
 {}
 
-PThread PThread::self() noexcept
+Thread Thread::self() noexcept
 {
-  return PThread(pthread_self());
+  return Thread(pthread_self());
 }
 
-ThreadCancelState PThread::setCancelState(ThreadCancelState newState)
+ThreadCancelState Thread::set_cancel_state(ThreadCancelState new_state)
 {
-  int oldState;
-  int err = pthread_setcancelstate(newState, &oldState);
+  int old_state;
+  int err = pthread_setcancelstate(new_state, &old_state);
   if (err)
-    throw PThreadException("pthread_setcancelstate", err);
-  return ThreadCancelState(oldState);
+    throw ThreadException("pthread_setcancelstate", err);
+  return ThreadCancelState(old_state);
 }
 
-ThreadCancelType PThread::setCancelType(ThreadCancelType newType)
+ThreadCancelType Thread::set_cancel_type(ThreadCancelType new_type)
 {
-  int oldType;
-  int err = pthread_setcanceltype(newType, &oldType);
+  int old_type;
+  int err = pthread_setcanceltype(new_type, &old_type);
   if (err)
-    throw PThreadException("pthread_setcanceltype", err);
-  return ThreadCancelType(oldType);
+    throw ThreadException("pthread_setcanceltype", err);
+  return ThreadCancelType(old_type);
 }
 
-void PThread::cancel() const
+void Thread::cancel() const
 {
   int err = pthread_cancel(handle);
   if (err)
-    throw PThreadException("pthread_cancel", err);
+    throw ThreadException("pthread_cancel", err);
 }
 
-void PThread::runWithCancellationCleanup(
-    const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine)
+void Thread::run_with_cancellation_cleanup(
+    const std::function<void()>& code_routine, std::function<void()> cleanup_routine)
 {
-  pthread_cleanup_push(routineWrapperNoRet, reinterpret_cast<void*>(&cleanupRoutine));
-  codeRoutine();
+  pthread_cleanup_push(routine_wrapper_no_ret, reinterpret_cast<void*>(&cleanup_routine));
+  code_routine();
   pthread_cleanup_pop(1);
 }
 
-void PThread::testCancel() noexcept
+void Thread::test_cancel() noexcept
 {
   pthread_testcancel();
 }
 
-void PThread::yield()
+void Thread::yield()
 {
   if (sched_yield()) {
-    throw PThreadException("sched_yield", errno);
+    throw ThreadException("sched_yield", errno);
   }
 }
 
-void PThread::queueSignal(int sig, sigval value) const
+void Thread::queue_signal(int sig, sigval value) const
 {
   int err = pthread_sigqueue(handle, sig, value);
   if (err)
-    throw PThreadException("pthread_sigqueue", err);
+    throw ThreadException("pthread_sigqueue", err);
 }
 
-sigset_t PThread::setSignalMask(int how, const sigset_t& set) const
+sigset_t Thread::set_signal_mask(int how, const sigset_t& set) const
 {
-  sigset_t oldSet;
-  int err = pthread_sigmask(how, &set, &oldSet);
+  sigset_t old_set;
+  int err = pthread_sigmask(how, &set, &old_set);
   if (err)
-    throw PThreadException("pthread_sigmask", err);
-  return oldSet;
+    throw ThreadException("pthread_sigmask", err);
+  return old_set;
 }
 
-void PThread::setConcurrencyLevel(int level)
+void Thread::set_concurrency_level(int level)
 {
   int err = pthread_setconcurrency(level);
   if (err)
-    throw PThreadException("pthread_setconcurrency", err);
+    throw ThreadException("pthread_setconcurrency", err);
 }
 
-int PThread::getConcurrencyLevel() noexcept
+int Thread::get_concurrency_level() noexcept
 {
   return pthread_getconcurrency();
 }
 
-void PThread::kill(int sig) const
+void Thread::kill(int sig) const
 {
   int err = pthread_kill(handle, sig);
   if (err)
-    throw PThreadException("pthread_kill", err);
+    throw ThreadException("pthread_kill", err);
 }
 
-const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept
+const pthread_attr_t* ThreadAttributes::underlying_data() const noexcept
 {
   return &attr;
 }
@@ -204,7 +204,7 @@ const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept
   do {                                                                                             \
     int err = pthread_function(&attr, state);                                                      \
     if (err)                                                                                       \
-      throw PThreadException(#pthread_function, err);                                              \
+      throw ThreadException(#pthread_function, err);                                               \
     return *this;                                                                                  \
   } while (0)
 
@@ -213,102 +213,102 @@ const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept
     ParamType state;                                                                               \
     int err = pthread_function(&attr, &state);                                                     \
     if (err)                                                                                       \
-      throw PThreadException(#pthread_function, err);                                              \
+      throw ThreadException(#pthread_function, err);                                               \
     return EnumClass(state);                                                                       \
   } while (0)
 
-PThreadAttributes& PThreadAttributes::setDetachState(AttrDetachState state)
+ThreadAttributes& ThreadAttributes::set_detach_state(AttrDetachState state)
 {
   ATTR_SETTER(AttrDetachState, pthread_attr_setdetachstate);
 }
 
-AttrDetachState PThreadAttributes::getDetachState() const
+AttrDetachState ThreadAttributes::get_detach_state() const
 {
   ATTR_GETTER(AttrDetachState, int, pthread_attr_getdetachstate);
 }
 
-PThreadAttributes& PThreadAttributes::setScope(AttrThreadScope state)
+ThreadAttributes& ThreadAttributes::set_scope(AttrThreadScope state)
 {
   ATTR_SETTER(AttrThreadScope, pthread_attr_setscope);
 }
 
-AttrThreadScope PThreadAttributes::getScope() const
+AttrThreadScope ThreadAttributes::get_scope() const
 {
   ATTR_GETTER(AttrThreadScope, int, pthread_attr_getscope);
 }
 
-PThreadAttributes& PThreadAttributes::setInheritScheduler(AttrInheritScheduler state)
+ThreadAttributes& ThreadAttributes::set_inherit_scheduler(AttrInheritScheduler state)
 {
   ATTR_SETTER(AttrInheritScheduler, pthread_attr_setinheritsched);
 }
 
-AttrInheritScheduler PThreadAttributes::getInheritScheduler() const
+AttrInheritScheduler ThreadAttributes::get_inherit_scheduler() const
 {
   ATTR_GETTER(AttrInheritScheduler, int, pthread_attr_getinheritsched);
 }
 
-PThreadAttributes& PThreadAttributes::setSchedulingPolicy(AttrSchedulingPolicy state)
+ThreadAttributes& ThreadAttributes::set_scheduling_policy(AttrSchedulingPolicy state)
 {
   ATTR_SETTER(AttrSchedulingPolicy, pthread_attr_setschedpolicy);
 }
 
-AttrSchedulingPolicy PThreadAttributes::getSchedulingPolicy() const
+AttrSchedulingPolicy ThreadAttributes::get_scheduling_policy() const
 {
   ATTR_GETTER(AttrSchedulingPolicy, int, pthread_attr_getschedpolicy);
 }
 
-PThreadAttributes& PThreadAttributes::setSchedulingPriority(int prio)
+ThreadAttributes& ThreadAttributes::set_scheduling_priority(int prio)
 {
   sched_param schedParam { prio };
   int err = pthread_attr_setschedparam(&attr, &schedParam);
   if (err)
-    throw PThreadException("pthread_attr_setschedparam", err);
+    throw ThreadException("pthread_attr_setschedparam", err);
   return *this;
 }
 
-int PThreadAttributes::getSchedulingPriority() const
+int ThreadAttributes::get_scheduling_priority() const
 {
   sched_param state { 0 };
   int err = pthread_attr_getschedparam(&attr, &state);
   if (err)
-    throw PThreadException("pthread_attr_getschedparam", err);
+    throw ThreadException("pthread_attr_getschedparam", err);
   return state.sched_priority;
 }
 
-PThreadAttributes& PThreadAttributes::setGuardSize(std::size_t state)
+ThreadAttributes& ThreadAttributes::set_guard_size(std::size_t state)
 {
   ATTR_SETTER(std::size_t, pthread_attr_setguardsize);
 }
 
-std::size_t PThreadAttributes::getGuardSize() const
+std::size_t ThreadAttributes::get_guard_size() const
 {
   ATTR_GETTER(std::size_t, std::size_t, pthread_attr_getguardsize);
 }
 
-PThreadAttributes& PThreadAttributes::setStackSize(std::size_t state)
+ThreadAttributes& ThreadAttributes::set_stack_size(std::size_t state)
 {
   ATTR_SETTER(std::size_t, pthread_attr_setstacksize);
 }
 
-std::size_t PThreadAttributes::getStackSize() const
+std::size_t ThreadAttributes::get_stack_size() const
 {
   ATTR_GETTER(std::size_t, std::size_t, pthread_attr_getstacksize);
 }
 
-PThreadAttributes& PThreadAttributes::setStackInfo(void* addr, std::size_t size)
+ThreadAttributes& ThreadAttributes::set_stack_info(void* addr, std::size_t size)
 {
   int err = pthread_attr_setstack(&attr, addr, size);
   if (err)
-    throw PThreadException("pthread_attr_setstack", err);
+    throw ThreadException("pthread_attr_setstack", err);
   return *this;
 }
 
-StackInfo PThreadAttributes::getStackInfo() const
+StackInfo ThreadAttributes::get_stack_info() const
 {
   StackInfo info { nullptr, 0 };
   int err = pthread_attr_getstack(&attr, &info.addr, &info.size);
   if (err)
-    throw PThreadException("pthread_attr_getstack", err);
+    throw ThreadException("pthread_attr_getstack", err);
   return info;
 }
 
@@ -322,25 +322,25 @@ SpinLock::~SpinLock()
     std::cerr << "(swallowed error in destructor) pthread_spin_destroy: " << err;
 }
 
-void SpinLock::spinLock()
+void SpinLock::spin_lock()
 {
   int err = pthread_spin_lock(&lock);
   if (err)
-    throw PThreadException("pthread_spin_lock", err);
+    throw ThreadException("pthread_spin_lock", err);
 }
 
 void SpinLock::unlock()
 {
   int err = pthread_spin_unlock(&lock);
   if (err)
-    throw PThreadException("pthread_spin_unlock", err);
+    throw ThreadException("pthread_spin_unlock", err);
 }
 
-void SpinLock::tryLock()
+void SpinLock::try_lock()
 {
   int err = pthread_spin_trylock(&lock);
   if (err)
-    throw PThreadException("pthread_spin_trylock", err);
+    throw ThreadException("pthread_spin_trylock", err);
 }
 
 }  // namespace microloop

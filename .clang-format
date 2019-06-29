@@ -4,6 +4,7 @@ ContinuationIndentWidth: 4
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
+  AfterEnum: true
   SplitEmptyFunction: false
   SplitEmptyRecord: false
 FixNamespaceComments: true
@@ -18,3 +19,4 @@ AccessModifierOffset: -2
 AllowShortFunctionsOnASingleLine: None
 AllowShortBlocksOnASingleLine: false
 BreakConstructorInitializers: AfterColon
+ReflowComments: true
