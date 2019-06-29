@@ -2,23 +2,26 @@
 
 #pragma once
 
+#include "./kernel_exception.h"
+
 #include <errno.h>
+#include <functional>
 #include <pthread.h>
 #include <signal.h>
-
-#include <functional>
-
-#include "./kernel_exception.h"
 
 namespace microloop {
 
 class LinuxThread {
-public:
+  public:
   using worker_fn = std::function<void*(void*)>;
 
-  LinuxThread(worker_fn worker): worker_{worker} {}
+  LinuxThread(worker_fn worker)
+      : worker_ { worker }
+  {
+  }
 
-  void run(void *args) {
+  void run(void* args)
+  {
     pthread_t thread;
     pthread_attr_t thread_attr;
     int error_code;
@@ -39,7 +42,8 @@ public:
       throw KernelException(error_code);
     }
   }
-private:
+
+  private:
   worker_fn worker_;
 };
 

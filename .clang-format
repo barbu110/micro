@@ -1,0 +1,12 @@
+BasedOnStyle: WebKit
+IndentWidth: 2
+ContinuationIndentWidth: 4
+BraceWrapping:
+  AfterFunction: true
+FixNamespaceComments: true
+SpacesBeforeTrailingComments: 2
+IncludeBlocks: Regroup
+SortIncludes: true
+SortUsingDeclarations: true
+SpaceBeforeParens: ControlStatements
+Standard: Cpp11

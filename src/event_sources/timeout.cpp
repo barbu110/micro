@@ -11,33 +11,30 @@
 
 namespace microloop::event_sources {
 
-Timeout::Timeout(Timeout::callback_type callback,int timeout) :
-    microloop::EventSource{}, timeout{timeout}, callback{callback}
-{
+Timeout::Timeout(Timeout::callback_type callback, int timeout) :
+    microloop::EventSource{}, timeout{timeout}, callback{callback} {
   errno = 0;
   fd = timerfd_create(CLOCK_REALTIME, 0);
   if (fd == -1) {
     throw microloop::KernelException(errno);
   }
 
-  itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
+  itimerspec timer_value{{0,              0},
+                         {timeout / 1000, timeout % 1000 * 1000000}};
   if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {
     throw microloop::KernelException(errno);
   }
 }
 
-Timeout::~Timeout()
-{
+Timeout::~Timeout() {
   close(fd);
 }
 
-int Timeout::get_fd()
-{
+int Timeout::get_fd() {
   return fd;
 }
 
-void Timeout::cleanup()
-{
+void Timeout::cleanup() {
   itimerspec cleanup{};
   itimerspec old{};
 

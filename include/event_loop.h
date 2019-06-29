@@ -3,7 +3,6 @@
 #pragma once
 
 #include <map>
-
 #include <sys/epoll.h>
 
 namespace microloop {
@@ -11,16 +10,19 @@ namespace microloop {
 class EventSource;
 
 class EventLoop {
-private:
+  private:
   EventLoop();
 
-public:
-  static EventLoop *get_main();
-  void add_event_source(EventSource *event_source);
+  public:
+  static EventLoop* get_main();
+
+  void add_event_source(EventSource* event_source);
+
   bool next_tick();
+
   ~EventLoop();
 
-private:
+  private:
   int epollfd;
   std::map<int, EventSource*> event_sources;
 

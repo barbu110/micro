@@ -6,20 +6,21 @@
 
 #include <event_source.h>
 
-namespace microloop::event_sources
-{
+namespace microloop::event_sources {
 
-class Timeout : public microloop::EventSource
-{
+class Timeout : public microloop::EventSource {
 public:
   using callback_type = std::function<void()>;
 
   Timeout(callback_type callback, int timeout);
+
   virtual ~Timeout() override;
 
 protected:
   virtual int get_fd() override;
+
   virtual void cleanup() override;
+
   virtual void notify() override;
 
 private:

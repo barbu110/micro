@@ -1,36 +1,32 @@
 // Copyright 2019 Stefan Silviu-Alexandru
 
-#include <unistd.h>
-#include <pthread_wrapper.h>
-#include <iostream>
 #include <cassert>
+#include <iostream>
+#include <pthread_wrapper.h>
+#include <unistd.h>
 
 using namespace microloop;
 
-void* thread1Routine(void*) {
+void* thread1Routine(void*)
+{
   sleep(2);
   std::cout << "Hello thread 1" << std::endl;
   return nullptr;
 }
 
-void* thread2Routine(void*) {
+void* thread2Routine(void*)
+{
   sleep(1);
   std::cout << "Hello thread 2" << std::endl;
   return nullptr;
 }
 
-int main() {
+int main()
+{
   PThread thread1(thread1Routine);
   thread1.detach();
 
-  PThread thread2(thread2Routine, PThreadAttributes()
-      .setDetachState(JOINABLE)
-      .setScope(SYSTEM)
-      .setInheritScheduler(INHERIT)
-      .setSchedulingPolicy(OTHER)
-      .setSchedulingPriority(0)
-      .setGuardSize(4096)
-      .setStackSize(0x201000));
+  PThread thread2(thread2Routine, PThreadAttributes().setDetachState(JOINABLE).setScope(SYSTEM).setInheritScheduler(INHERIT).setSchedulingPolicy(OTHER).setSchedulingPriority(0).setGuardSize(4096).setStackSize(0x201000));
 
   PThread thread3([]() {
     sleep(3);
