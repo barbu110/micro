@@ -36,10 +36,14 @@ int main()
           .set_guard_size(4096)
           .set_guard_size(0x201000));
 
-  Thread thread3([]() {
-    sleep(3);
+  int thread3_return;
+
+  Thread thread3([&thread3_return]() {
+    sleep(1);
     std::cout << "Hello thread 3" << std::endl;
+    thread3_return = 123;
   });
+  thread3.detach();
 
   int test = 42;
 
@@ -56,12 +60,12 @@ int main()
 
   auto ptr_to_test = thread4.join<int>();
   thread2.join();
-  thread3.join();
 
   auto thread5_ret_val = thread5.join<Thread>();
   assert(thread5 == *thread5_ret_val);
   assert(thread1 != thread2);
 
+  std::cout << "Thread 3 returned " << thread3_return << std::endl;
   std::cout << "Thread 4 returned " << *ptr_to_test << std::endl;
   return 0;
 }
