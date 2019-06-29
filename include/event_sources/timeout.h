@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include <functional>
-
 #include <event_source.h>
+#include <functional>
 
 namespace microloop::event_sources {
 
@@ -36,7 +35,6 @@ private:
 
 }  // namespace microloop::event_sources
 
-#define MICROLOOP_SET_TIMEOUT(on_done, ms) \
-  microloop::EventLoop::get_main()->add_event_source( \
-    new microloop::event_sources::Timeout(on_done, ms) \
-  );
+#define MICROLOOP_SET_TIMEOUT(on_done, ms)                                                         \
+  microloop::EventLoop::get_main()->add_event_source(                                              \
+      new microloop::event_sources::Timeout(on_done, ms));

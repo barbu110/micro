@@ -14,14 +14,12 @@
 
 namespace microloop {
 class PThreadException : public std::runtime_error {
-  public:
+public:
   const int error;
 
-  explicit PThreadException(const std::string& source, int error)
-      : std::runtime_error(source + " error: " + strerror(error))
-      , error(error)
-  {
-  }
+  explicit PThreadException(const std::string& source, int error) :
+      std::runtime_error(source + " error: " + strerror(error)), error(error)
+  {}
 };
 
 enum AttrDetachState : int {
@@ -57,7 +55,7 @@ struct StackInfo {
 class PThreadAttributes {
   pthread_attr_t attr;
 
-  public:
+public:
   explicit PThreadAttributes();
 
   ~PThreadAttributes();
@@ -101,10 +99,7 @@ class PThreadAttributes {
   StackInfo getStackInfo() const;
 };
 
-enum ThreadCancelState : int {
-  ENABLED = PTHREAD_CANCEL_ENABLE,
-  DISABLED = PTHREAD_CANCEL_DISABLE
-};
+enum ThreadCancelState : int { ENABLED = PTHREAD_CANCEL_ENABLE, DISABLED = PTHREAD_CANCEL_DISABLE };
 
 enum ThreadCancelType : int {
   DEFERRED = PTHREAD_CANCEL_DEFERRED,
@@ -138,16 +133,15 @@ class PThread {
    * @param highLevelRoutine the actual code to run on the new thread
    * @param attrs attributes for the new thread
    */
-  template <
-      typename Functor,
+  template <typename Functor,
       typename std::enable_if_t<
-          !std::is_same_v<std::nullptr_t, Functor> && std::is_invocable_r<void*, Functor, void*>::value> = 0>
-  PThread(ThreadRoutine carrierRoutine, Functor highLevelRoutine, const pthread_attr_t* attrs)
-      : PThread(carrierRoutine, reinterpret_cast<void*>(highLevelRoutine), attrs)
-  {
-  }
+          !std::is_same_v<std::nullptr_t,
+              Functor> && std::is_invocable_r<void*, Functor, void*>::value> = 0>
+  PThread(ThreadRoutine carrierRoutine, Functor highLevelRoutine, const pthread_attr_t* attrs) :
+      PThread(carrierRoutine, reinterpret_cast<void*>(highLevelRoutine), attrs)
+  {}
 
-  public:
+public:
   /** Create a thread and run the specified routine. */
   explicit PThread(ThreadRoutine);
 
@@ -163,7 +157,8 @@ class PThread {
   /** Create a thread and run the specified routine that returns a value. */
   static PThread makeWithRet(std::function<void*()>);
 
-  /** Create a thread with the given attributes and run the specified routine that returns a value. */
+  /** Create a thread with the given attributes and run the specified routine that returns a value.
+   */
   static PThread makeWithRet(std::function<void*()>, const PThreadAttributes&);
 
   /** Returns the @ref PThread object for the current thread. */
@@ -173,11 +168,12 @@ class PThread {
   static noreturn void exit(void* retVal = nullptr) noexcept;
 
   /**
-   * Have the current thread yield the processor. Intended for use with @ref AttrSchedulingPolicy.FIFO or
+   * Have the current thread yield the processor. Intended for use with @ref
+   * AttrSchedulingPolicy.FIFO or
    * @ref AttrSchedulingPolicy.ROUND_ROBIN.
    *
-   * @ref pthread_yield is non-portable, but @ref sched_yield is, and the former is implemented using the latter on
-   * at least Linux.
+   * @ref pthread_yield is non-portable, but @ref sched_yield is, and the former is implemented
+   * using the latter on at least Linux.
    */
   static void yield();
 
@@ -193,8 +189,8 @@ class PThread {
    * @param cleanupRoutine the actual cleanup code for @ref pthread_cleanup_push
    * @sa pthread_cleanup_pop
    */
-  static void
-  runWithCancellationCleanup(const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine);
+  static void runWithCancellationCleanup(
+      const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine);
 
   /** @sa pthread_testcancel */
   static void testCancel() noexcept;
@@ -209,8 +205,7 @@ class PThread {
    * Safer wrapper for @ref pthread_join.
    * @tparam T cast the thread's return value to a pointer of this type
    */
-  template <typename T = void>
-  T* join()
+  template <typename T = void> T* join()
   {
     void* retValPtr;
     int err = pthread_join(handle, &retValPtr);
@@ -250,7 +245,7 @@ enum LockShareState : int {
 class SpinLock {
   pthread_spinlock_t lock;
 
-  public:
+public:
   explicit SpinLock(LockShareState);
 
   ~SpinLock();

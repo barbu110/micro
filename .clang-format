@@ -1,8 +1,11 @@
 BasedOnStyle: WebKit
 IndentWidth: 2
 ContinuationIndentWidth: 4
+BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
 FixNamespaceComments: true
 SpacesBeforeTrailingComments: 2
 IncludeBlocks: Regroup
@@ -10,3 +13,8 @@ SortIncludes: true
 SortUsingDeclarations: true
 SpaceBeforeParens: ControlStatements
 Standard: Cpp11
+ColumnLimit: 100
+AccessModifierOffset: -2
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: false
+BreakConstructorInitializers: AfterColon

@@ -34,25 +34,19 @@ PThread::PThread(ThreadRoutine targetRoutine, void* routineData, const pthread_a
     throw PThreadException("pthread_create", err);
 }
 
-PThread::PThread(ThreadRoutine routine)
-    : PThread(routine, nullptr, nullptr)
-{
-}
+PThread::PThread(ThreadRoutine routine) : PThread(routine, nullptr, nullptr)
+{}
 
-PThread::PThread(ThreadRoutine routine, const PThreadAttributes& attrs)
-    : PThread(routine, nullptr, attrs.getUnderlyingData())
-{
-}
+PThread::PThread(ThreadRoutine routine, const PThreadAttributes& attrs) :
+    PThread(routine, nullptr, attrs.getUnderlyingData())
+{}
 
-PThread::PThread(std::function<void()> routine)
-    : PThread(routineWrapperNullRet, &routine, nullptr)
-{
-}
+PThread::PThread(std::function<void()> routine) : PThread(routineWrapperNullRet, &routine, nullptr)
+{}
 
-PThread::PThread(std::function<void()> routine, const PThreadAttributes& attrs)
-    : PThread(routineWrapperNullRet, &routine, attrs.getUnderlyingData())
-{
-}
+PThread::PThread(std::function<void()> routine, const PThreadAttributes& attrs) :
+    PThread(routineWrapperNullRet, &routine, attrs.getUnderlyingData())
+{}
 
 PThreadAttributes::PThreadAttributes()
 {
@@ -113,10 +107,8 @@ bool PThread::operator!=(const PThread& other) const noexcept
   return !operator==(other);
 }
 
-PThread::PThread(pthread_t otherHandle) noexcept
-    : handle(otherHandle)
-{
-}
+PThread::PThread(pthread_t otherHandle) noexcept : handle(otherHandle)
+{}
 
 PThread PThread::self() noexcept
 {
@@ -148,7 +140,8 @@ void PThread::cancel() const
     throw PThreadException("pthread_cancel", err);
 }
 
-void PThread::runWithCancellationCleanup(const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine)
+void PThread::runWithCancellationCleanup(
+    const std::function<void()>& codeRoutine, std::function<void()> cleanupRoutine)
 {
   pthread_cleanup_push(routineWrapperNoRet, reinterpret_cast<void*>(&cleanupRoutine));
   codeRoutine();
@@ -207,21 +200,21 @@ const pthread_attr_t* PThreadAttributes::getUnderlyingData() const noexcept
   return &attr;
 }
 
-#define ATTR_SETTER(EnumClass, pthread_function)      \
-  do {                                                \
-    int err = pthread_function(&attr, state);         \
-    if (err)                                          \
-      throw PThreadException(#pthread_function, err); \
-    return *this;                                     \
+#define ATTR_SETTER(EnumClass, pthread_function)                                                   \
+  do {                                                                                             \
+    int err = pthread_function(&attr, state);                                                      \
+    if (err)                                                                                       \
+      throw PThreadException(#pthread_function, err);                                              \
+    return *this;                                                                                  \
   } while (0)
 
-#define ATTR_GETTER(EnumClass, ParamType, pthread_function) \
-  do {                                                      \
-    ParamType state;                                        \
-    int err = pthread_function(&attr, &state);              \
-    if (err)                                                \
-      throw PThreadException(#pthread_function, err);       \
-    return EnumClass(state);                                \
+#define ATTR_GETTER(EnumClass, ParamType, pthread_function)                                        \
+  do {                                                                                             \
+    ParamType state;                                                                               \
+    int err = pthread_function(&attr, &state);                                                     \
+    if (err)                                                                                       \
+      throw PThreadException(#pthread_function, err);                                              \
+    return EnumClass(state);                                                                       \
   } while (0)
 
 PThreadAttributes& PThreadAttributes::setDetachState(AttrDetachState state)
