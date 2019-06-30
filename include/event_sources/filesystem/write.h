@@ -15,14 +15,14 @@ class Write : public microloop::ThreadEventSource {
   using TypeHelper = microloop::detail::EventSourceHelper<ssize_t>;
 
 public:
-  Write(const std::string& filename, const std::string& buffer, TypeHelper::Callback callback);
+  Write(const std::string &filename, const std::string &buffer, TypeHelper::Callback callback);
   void start() override;
   void cleanup() override;
   void notify() override;
 
 private:
   std::string filename;
-  const std::string& buffer;
+  const std::string &buffer;
   TypeHelper::Callback callback;
   TypeHelper::Result return_object;
 };

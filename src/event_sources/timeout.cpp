@@ -10,7 +10,7 @@
 namespace microloop::event_sources {
 
 Timeout::Timeout(Timeout::callback_type callback, int timeout) :
-    microloop::EventSource {}, timeout { timeout }, callback { callback }
+    microloop::EventSource{}, timeout{timeout}, callback{callback}
 {}
 
 Timeout::~Timeout()
@@ -20,7 +20,7 @@ Timeout::~Timeout()
 
 microloop::EventSource::TrackingData Timeout::get_tracking_data() const
 {
-  return { fd, -1 };
+  return {fd, -1};
 }
 
 void Timeout::start()
@@ -31,7 +31,7 @@ void Timeout::start()
     throw microloop::KernelException(errno);
   }
 
-  itimerspec timer_value { { 0, 0 }, { timeout / 1000, timeout % 1000 * 1000000 } };
+  itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
   if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {
     throw microloop::KernelException(errno);
   }
@@ -39,8 +39,8 @@ void Timeout::start()
 
 void Timeout::cleanup()
 {
-  itimerspec cleanup {};
-  itimerspec old {};
+  itimerspec cleanup{};
+  itimerspec old{};
 
   if (timerfd_gettime(fd, &old) == -1) {
     throw microloop::KernelException(errno);

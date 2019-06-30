@@ -18,14 +18,14 @@
 namespace microloop::event_sources::filesystem {
 
 Write::Write(
-    const std::string& filename, const std::string& buffer, Write::TypeHelper::Callback callback) :
-    microloop::ThreadEventSource {},
-    filename { filename }, buffer { buffer }, callback { callback }
+    const std::string &filename, const std::string &buffer, Write::TypeHelper::Callback callback) :
+    microloop::ThreadEventSource{},
+    filename{filename}, buffer{buffer}, callback{callback}
 {}
 
 void Write::start()
 {
-  std::thread worker { [&]() {
+  std::thread worker{[&]() {
     int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_APPEND | O_NONBLOCK);
 
     if (fd == -1) {
@@ -39,13 +39,11 @@ void Write::start()
 
     return_object = std::make_tuple(written);
 
-    union sigval signal_data {
-      0
-    };
+    sigval signal_data{0};
     signal_data.sival_int = get_thread_id();
 
     sigqueue(getpid(), SIGUSR1, signal_data);
-  } };
+  }};
 
   worker.detach();
 }

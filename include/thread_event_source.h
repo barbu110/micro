@@ -22,7 +22,7 @@ public:
 protected:
   EventSource::TrackingData get_tracking_data() const override
   {
-    return { -1, thread_id };
+    return {-1, thread_id};
   }
 
 private:

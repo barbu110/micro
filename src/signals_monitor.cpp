@@ -10,7 +10,7 @@
 
 namespace microloop {
 
-SignalsMonitor::SignalsMonitor() : EventSource {}
+SignalsMonitor::SignalsMonitor() : EventSource{}
 {
   sigset_t mask;
   sigemptyset(&mask);
@@ -33,7 +33,7 @@ SignalsMonitor::~SignalsMonitor()
 
 EventSource::TrackingData SignalsMonitor::get_tracking_data() const
 {
-  return { fd, -1 };
+  return {fd, -1};
 }
 
 }  // namespace microloop
