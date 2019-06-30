@@ -16,7 +16,9 @@ public:
   virtual ~Timeout() override;
 
 protected:
-  virtual int get_fd() override;
+  virtual microloop::EventSource::TrackingData get_tracking_data() const override;
+
+  virtual void start() override;
 
   virtual void cleanup() override;
 

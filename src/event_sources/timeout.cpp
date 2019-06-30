@@ -11,6 +11,19 @@ namespace microloop::event_sources {
 
 Timeout::Timeout(Timeout::callback_type callback, int timeout) :
     microloop::EventSource {}, timeout { timeout }, callback { callback }
+{}
+
+Timeout::~Timeout()
+{
+  close(fd);
+}
+
+microloop::EventSource::TrackingData Timeout::get_tracking_data() const
+{
+  return {fd, -1};
+}
+
+void Timeout::start()
 {
   errno = 0;
   fd = timerfd_create(CLOCK_REALTIME, 0);
@@ -22,16 +35,6 @@ Timeout::Timeout(Timeout::callback_type callback, int timeout) :
   if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {
     throw microloop::KernelException(errno);
   }
-}
-
-Timeout::~Timeout()
-{
-  close(fd);
-}
-
-int Timeout::get_fd()
-{
-  return fd;
 }
 
 void Timeout::cleanup()

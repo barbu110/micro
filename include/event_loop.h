@@ -3,11 +3,13 @@
 #pragma once
 
 #include <map>
-#include <sys/epoll.h>
+
+#include <signals_monitor.h>
 
 namespace microloop {
 
 class EventSource;
+class ThreadEventSource;
 
 class EventLoop {
 private:
@@ -23,8 +25,13 @@ public:
   ~EventLoop();
 
 private:
+  int next_thread_id() const;
+
+private:
   int epollfd;
-  std::map<int, EventSource*> event_sources;
+  SignalsMonitor signals_monitor;
+  std::map<int /* file descriptor */, EventSource*> event_sources;
+  std::map<int /* thread_id */, ThreadEventSource*> thread_event_sources;
 
   static EventLoop* main_instance;
 };

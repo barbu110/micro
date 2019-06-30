@@ -10,11 +10,18 @@ class EventSource {
   friend class EventLoop;
 
 public:
+  struct TrackingData {
+    int fd;
+    int thread_id = -1;
+  };
+
   virtual ~EventSource()
   {}
 
 protected:
-  virtual int get_fd() = 0;
+  virtual TrackingData get_tracking_data() const = 0;
+
+  virtual void start() = 0;
 
   virtual void cleanup() = 0;
 
