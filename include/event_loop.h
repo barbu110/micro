@@ -16,11 +16,8 @@ private:
 
 public:
   static EventLoop *get_main();
-
   void add_event_source(EventSource *event_source);
-
   bool next_tick();
-
   ~EventLoop();
 
 private:

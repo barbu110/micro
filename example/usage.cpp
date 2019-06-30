@@ -1,11 +1,8 @@
 // Copyright 2019 Victor Barbu
 
-#include <event_loop.h>
-#include <event_sources/timeout.h>
-#include <event_sources/filesystem/write.h>
 #include <iostream>
 #include <string>
-#include <unistd.h>
+#include <microloop.h>
 
 void first_timer()
 {
@@ -17,14 +14,26 @@ void second_timer()
   std::cout << "Second timer is done.\n";
 }
 
+void on_read(std::string data)
+{
+  std::cout << "Read: " << data.size() << " bytes.\n";
+  std::cout << data << "\n";
+}
+
+using namespace microloop;
+
 int main()
 {
   std::string buffer(471859200, 'v');
-  MICROLOOP_FS_WRITE("/tmp/test.test", buffer, [](ssize_t s) { std::cout << "Done writing " << s << " bytes.\n"; });
+  fs::write("/tmp/test.test", buffer, [](ssize_t s) {
+    std::cout << "Done writing " << s << " bytes.\n";
+  });
 
-  MICROLOOP_SET_TIMEOUT(first_timer, 4500);
-  MICROLOOP_SET_TIMEOUT(second_timer, 2000);
-  MICROLOOP_SET_TIMEOUT([]() { std::cout << "Third timer is done.\n"; }, 100);
+  timers::set_timeout(first_timer, 4500);
+  timers::set_timeout(second_timer, 2000);
+  timers::set_timeout([]() { std::cout << "Third timer is done.\n"; }, 100);
+
+  fs::read("data.txt", on_read);
 
   while (true) {
     MICROLOOP_TICK();
