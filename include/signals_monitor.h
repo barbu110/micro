@@ -27,4 +27,4 @@ private:
   int fd;
 };
 
-}
+}  // namespace microloop

@@ -86,7 +86,7 @@ bool EventLoop::next_tick()
     if (event.events & EPOLLIN) {
       auto fd = event.data.fd;
       if (fd == signals_monitor.get_tracking_data().fd) {
-        signalfd_siginfo signal_info{};
+        signalfd_siginfo signal_info {};
         if (read(fd, &signal_info, sizeof(signalfd_siginfo)) == -1) {
           throw KernelException(errno);
         }

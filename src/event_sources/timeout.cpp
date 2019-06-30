@@ -20,7 +20,7 @@ Timeout::~Timeout()
 
 microloop::EventSource::TrackingData Timeout::get_tracking_data() const
 {
-  return {fd, -1};
+  return { fd, -1 };
 }
 
 void Timeout::start()

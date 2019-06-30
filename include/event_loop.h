@@ -3,7 +3,6 @@
 #pragma once
 
 #include <map>
-
 #include <signals_monitor.h>
 
 namespace microloop {
