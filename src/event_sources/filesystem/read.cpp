@@ -9,7 +9,6 @@
 #include <iostream>
 #include <kernel_exception.h>
 #include <pthread.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
@@ -25,7 +24,8 @@ Read::Read(const std::string &filename, size_t max_len, TypeHelper::Callback cal
     Read{filename, max_len, 0, callback}
 {}
 
-Read::Read(const std::string &filename, size_t max_len, off_t offset, Read::TypeHelper::Callback callback) :
+Read::Read(const std::string &filename, size_t max_len, off_t offset,
+    Read::TypeHelper::Callback callback) :
     microloop::ThreadEventSource{},
     filename{filename}, max_len{max_len}, offset{offset}, callback{callback}
 {}
@@ -54,12 +54,7 @@ void Read::start()
       throw KernelException(errno);
     }
 
-    return_object = std::make_tuple(file_contents);
-
-    sigval signal_data{0};
-    signal_data.sival_int = get_thread_id();
-
-    sigqueue(getpid(), SIGUSR1, signal_data);
+    WORKER_RETURN(file_contents);
   }};
 
   worker.detach();

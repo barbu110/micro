@@ -37,12 +37,7 @@ void Write::start()
       throw KernelException(errno);
     }
 
-    return_object = std::make_tuple(written);
-
-    sigval signal_data{0};
-    signal_data.sival_int = get_thread_id();
-
-    sigqueue(getpid(), SIGUSR1, signal_data);
+    WORKER_RETURN(written);
   }};
 
   worker.detach();

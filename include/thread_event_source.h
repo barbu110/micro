@@ -5,6 +5,9 @@
 #pragma once
 
 #include <event_source.h>
+#include <signal.h>
+#include <tuple>
+#include <unistd.h>
 
 namespace microloop {
 
@@ -25,6 +28,14 @@ protected:
     return {-1, thread_id};
   }
 
+  inline void signal_ready() const
+  {
+    sigval signal_data{0};
+    signal_data.sival_int = get_thread_id();
+
+    sigqueue(getpid(), SIGUSR1, signal_data);
+  }
+
 private:
   void set_thread_id(int thread_id)
   {
@@ -34,5 +45,11 @@ private:
 private:
   int thread_id;
 };
+
+#define WORKER_RETURN(...)                                                                         \
+  do {                                                                                             \
+    return_object = std::make_tuple(__VA_ARGS__);                                                  \
+    signal_ready();                                                                                \
+  } while (false)
 
 }  // namespace microloop
