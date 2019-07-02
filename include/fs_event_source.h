@@ -13,37 +13,22 @@ namespace microloop {
 
 class EventLoop;
 
-class ThreadEventSource : public EventSource {
+class FsEventSource : public EventSource {
   friend class EventLoop;
 
-public:
-  int get_thread_id() const
-  {
-    return thread_id;
-  }
-
 protected:
-  EventSource::TrackingData get_tracking_data() const override
+  bool has_fd() const override
   {
-    return {-1, thread_id};
+    return false;
   }
 
   inline void signal_ready() const
   {
     sigval signal_data{0};
-    signal_data.sival_int = get_thread_id();
+    signal_data.sival_int = get_id();
 
     sigqueue(getpid(), SIGUSR1, signal_data);
   }
-
-private:
-  void set_thread_id(int thread_id)
-  {
-    this->thread_id = thread_id;
-  }
-
-private:
-  int thread_id;
 };
 
 #define WORKER_RETURN(...)                                                                         \

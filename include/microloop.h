@@ -12,10 +12,11 @@
 
 namespace microloop::timers {
 
-static void set_timeout(microloop::event_sources::Timeout::callback_type on_done, int ms)
+template<typename Callback>
+static void set_timeout(int ms, Callback on_done)
 {
   microloop::EventLoop::get_main()->add_event_source(
-      new microloop::event_sources::Timeout(on_done, ms));
+      new microloop::event_sources::Timeout(ms, on_done));
 }
 
 }  // namespace microloop::timers
@@ -27,6 +28,13 @@ static void write(const Filename &filename, const Buffer &buffer, Callback callb
 {
   microloop::EventLoop::get_main()->add_event_source(
       new microloop::event_sources::filesystem::Write(filename, buffer, callback));
+}
+
+template <typename Buffer, typename Callback>
+static void write(int fd, const Buffer &buffer, Callback callback)
+{
+  microloop::EventLoop::get_main()->add_event_source(
+      new microloop::event_sources::filesystem::Write(fd, buffer, callback));
 }
 
 template <typename Filename, typename Callback>

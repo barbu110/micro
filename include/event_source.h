@@ -1,31 +1,54 @@
-// Copyright 2019 Victor Barbu
+//
+// Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
+//
 
 #pragma once
+
+#include <functional>
+#include <tuple>
 
 namespace microloop {
 
 class EventLoop;
 
+template <class... ReturnTypeParams>
+class TypeHelper {
+public:
+  using ReturnType = std::tuple<ReturnTypeParams...>;
+  using Callback = std::function<void(ReturnTypeParams...)>;
+};
+
 class EventSource {
   friend class EventLoop;
 
 public:
-  struct TrackingData {
-    int fd;
-    int thread_id = -1;
-  };
-
   virtual ~EventSource()
   {}
 
 protected:
-  virtual TrackingData get_tracking_data() const = 0;
+  int get_id() const
+  {
+    return id;
+  }
 
-  virtual void start() = 0;
+  void set_id(int id)
+  {
+    this->id = id;
+  }
 
-  virtual void cleanup() = 0;
+  virtual bool has_fd() const
+  {
+    return true;
+  }
 
-  virtual void notify() = 0;
+  virtual void start()
+  {}
+
+  virtual void run_callback()
+  {}
+
+private:
+  int id;
 };
 
 }  // namespace microloop

@@ -4,35 +4,55 @@
 
 #include <event_source.h>
 #include <functional>
+#include <errno.h>
+#include <kernel_exception.h>
+#include <sys/timerfd.h>
+#include <unistd.h>
 
 namespace microloop::event_sources {
 
 class Timeout : public microloop::EventSource {
+  using Types = TypeHelper<>;
 public:
-  using callback_type = std::function<void()>;
 
-  Timeout(callback_type callback, int timeout);
+  Timeout(int timeout, Types::Callback callback) :
+    microloop::EventSource{}, timeout{timeout}, callback{callback}
+  {}
 
-  virtual ~Timeout() override;
+  virtual ~Timeout() override
+  {
+    int fd = get_id();
+    close(fd);
+  }
 
 protected:
-  virtual microloop::EventSource::TrackingData get_tracking_data() const override;
+  virtual void start() override
+  {
+    errno = 0;
+    int fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
+    if (fd == -1) {
+      throw microloop::KernelException(errno);
+    }
 
-  virtual void start() override;
+    set_id(fd);
 
-  virtual void cleanup() override;
+    itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
+    if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {
+      throw microloop::KernelException(errno);
+    }
+  }
 
-  virtual void notify() override;
+  virtual void run_callback() override
+  {
+    callback();
+  }
 
 private:
-  // The file descriptor of the timer
-  int fd;
-
   // Timeout in milliseconds.
   int timeout;
 
   // The callable object to call when the timer finishes.
-  callback_type callback;
+  Types::Callback callback;
 };
 
 }  // namespace microloop::event_sources

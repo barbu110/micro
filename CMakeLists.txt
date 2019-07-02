@@ -8,10 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_library(microloop SHARED
         src/event_loop.cpp
-        src/event_sources/timeout.cpp
-        src/event_sources/filesystem/write.cpp
-        src/event_sources/filesystem/read.cpp
-        src/signals_monitor.cpp)
+        src/event_sources/filesystem/read.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
