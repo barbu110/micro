@@ -84,8 +84,6 @@ public:
 
       auto key = event.data.fd;
 
-      std::cout << "Got event from " << key << "\n";
-
       if (key == signals_monitor.get_id()) {
         signalfd_siginfo signal_info{};
         if (read(key, &signal_info, sizeof(signalfd_siginfo)) == -1) {

@@ -26,6 +26,9 @@ public:
   {}
 
 protected:
+  EventSource(int id = 0) : id{id}
+  {}
+
   int get_id() const
   {
     return id;

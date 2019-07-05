@@ -7,11 +7,26 @@
 #include <sys/un.h>
 #include <cstring>
 #include <arpa/inet.h>
+#include <algorithm>
+#include <sstream>
+#include <iterator>
 
 using namespace microloop;
 
-int main()
+int main(int argc, char **argv)
 {
+  if (argc < 2) {
+    std::cerr << "usage: " << argv[0] << " <ip>:<port> <data>\n";
+    return -1;
+  }
+
+  std::stringstream addr{argv[1]};
+  std::string ip, port_str;
+  std::getline(addr, ip, ':');
+  std::getline(addr, port_str, ':');
+
+  int port = std::stoi(port_str);
+
   sockaddr_in svaddr;
   socklen_t len;
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -20,9 +35,9 @@ int main()
   }
 
   svaddr.sin_family = AF_INET;
-  svaddr.sin_port = htons(5000);
+  svaddr.sin_port = htons(port);
 
-  if (inet_pton(AF_INET, "127.0.0.1", &svaddr.sin_addr) < 0) {
+  if (inet_pton(AF_INET, ip.c_str(), &svaddr.sin_addr) < 0) {
     std::cerr << "pton failed\n";
   }
 
@@ -30,17 +45,14 @@ int main()
     std::cerr << "connect failed\n";
   }
 
-  fs::write(sockfd, "victor", [](ssize_t written) {
+  if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
+    std::cerr << "fcntl\n";
+  }
+
+  microloop::Buffer buf{argv[2], strlen(argv[2])};
+  net::utils::send(sockfd, buf, [](ssize_t written) {
     std::cout << "Written " << written << " bytes.\n";
   });
-  //
-  // timers::set_timeout(2000, []() {
-  //   std::cout << "Timeout 1 is done. 2000ms passed.\n";
-  // });
-  //
-  // timers::set_timeout(400, []() {
-  //   std::cout << "Timeout 2 is done. 400ms passed.\n";
-  // });
 
   while (true) {
     MICROLOOP_TICK();

@@ -8,16 +8,21 @@
 namespace microloop {
 
 class Buffer {
-  std::size_t size;
+  std::size_t sz;
   void *buf;
 
 public:
-  explicit Buffer(std::size_t size) noexcept : size(size), buf(malloc(size))
+  explicit Buffer(std::size_t sz) noexcept : sz(sz), buf(malloc(sz))
   {}
 
-  Buffer(const char *src, std::size_t size) : Buffer(size)
+  Buffer(const char *src, std::size_t sz) : Buffer(sz)
   {
-    std::memcpy(buf, src, size);
+    std::memcpy(buf, src, sz);
+  }
+
+  Buffer(const char *src) : Buffer(strlen(src) + 1)
+  {
+    std::memcpy(buf, src, sz);
   }
 
 #pragma clang diagnostic push
@@ -31,9 +36,9 @@ public:
     free(buf);
   }
 
-  Buffer(const Buffer &other) noexcept : Buffer(other.size)
+  Buffer(const Buffer &other) noexcept : Buffer(other.sz)
   {
-    std::memcpy(buf, other.buf, other.size);
+    std::memcpy(buf, other.buf, other.sz);
   }
 
   Buffer &operator=(Buffer other) noexcept
@@ -50,21 +55,21 @@ public:
     return buf;
   }
 
-  std::size_t getSize() const noexcept
+  std::size_t size() const noexcept
   {
-    return size;
+    return sz;
   }
 
   void resize(std::size_t new_size) noexcept
   {
     buf = realloc(buf, new_size);
-    size = new_size;
+    sz = new_size;
   }
 
   friend void swap(Buffer &lhs, Buffer &rhs) noexcept
   {
     using std::swap;
-    swap(lhs.size, rhs.size);
+    swap(lhs.sz, rhs.sz);
     swap(lhs.buf, rhs.buf);
   }
 };

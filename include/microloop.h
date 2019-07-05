@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <buffer.h>
+
 #include <event_loop.h>
 #include <event_sources/filesystem/read.h>
 #include <event_sources/filesystem/write.h>
+#include <event_sources/net/send.h>
 #include <event_sources/timeout.h>
 #include <string>
 
@@ -59,3 +62,14 @@ static void read(const Filename &filename, MaxLen max_len, Offset offset, Callba
 }
 
 }  // namespace microloop::fs
+
+namespace microloop::net::utils {
+
+template<typename Callback>
+static void send(int sock, const Buffer &buf, Callback on_sent)
+{
+  microloop::EventLoop::get_main()->add_event_source(
+    new microloop::event_sources::net::Send(sock, buf, on_sent));
+}
+
+}
