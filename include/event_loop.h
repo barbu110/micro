@@ -44,8 +44,6 @@ public:
 
   void add_event_source(EventSource *event_source)
   {
-    event_source->start();
-
     std::uint64_t key = event_source->get_id();
     if (!event_source->has_fd()) {
       event_source->set_id(next_thread_id());
@@ -63,6 +61,8 @@ public:
     }
 
     event_sources[key] = event_source;
+
+    event_source->start();
   }
 
   bool register_signal_handler(SignalsMonitor::SignalHandler callback)  // TODO
