@@ -37,7 +37,7 @@ class ThreadPool {
   };
 
 public:
-  ThreadPool(std::uint32_t threads_count)
+  ThreadPool(std::uint32_t threads_count) : done{false}
   {
     if (!threads_count) {
       throw std::invalid_argument("threads_count must be at least 1");
