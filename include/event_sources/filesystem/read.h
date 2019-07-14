@@ -2,19 +2,19 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <fs_event_source.h>
-#include <tuple>
-#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fs_event_source.h>
 #include <functional>
 #include <kernel_exception.h>
+#include <memory>
 #include <pthread.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
+#include <tuple>
+#include <unistd.h>
 
 namespace microloop::event_sources::filesystem {
 
@@ -22,8 +22,7 @@ class Read : public microloop::FsEventSource {
   using Types = microloop::TypeHelper<std::string>;
 
 public:
-  Read(const std::string &filename, Types::Callback callback) :
-      Read{filename, 0, 0, callback}
+  Read(const std::string &filename, Types::Callback callback) : Read{filename, 0, 0, callback}
   {}
 
   Read(const std::string &filename, size_t max_len, Types::Callback callback) :
@@ -31,8 +30,8 @@ public:
   {}
 
   Read(const std::string &filename, size_t max_len, off_t offset, Types::Callback callback) :
-      microloop::FsEventSource{},
-      filename{filename}, max_len{max_len}, offset{offset}, callback{callback}
+      microloop::FsEventSource{}, filename{filename}, max_len{max_len}, offset{offset},
+      callback{callback}
   {
     fd = open(filename.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd == -1) {

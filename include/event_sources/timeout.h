@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include <errno.h>
 #include <event_source.h>
 #include <functional>
-#include <errno.h>
 #include <kernel_exception.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -13,15 +13,15 @@ namespace microloop::event_sources {
 
 class Timeout : public microloop::EventSource {
   using Types = TypeHelper<>;
-public:
 
+public:
   Timeout(int timeout, Types::Callback callback) :
-    microloop::EventSource{}, timeout{timeout}, callback{callback}
+      microloop::EventSource{}, timeout{timeout}, callback{callback}
   {}
 
   virtual ~Timeout() override
   {
-    int fd = get_id();
+    int fd = get_fd();
     close(fd);
   }
 
@@ -34,7 +34,7 @@ protected:
       throw microloop::KernelException(errno);
     }
 
-    set_id(fd);
+    set_fd(fd);
 
     itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
     if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {

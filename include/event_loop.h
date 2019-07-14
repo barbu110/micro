@@ -6,30 +6,25 @@
 
 #include <cstdint>
 #include <errno.h>
+#include <event_source.h>
 #include <kernel_exception.h>
 #include <limits>
 #include <map>
 #include <signal.h>
-#include <signals_monitor.h>
 #include <sys/epoll.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
-#include <iostream>
+#include <utils/thread_pool.h>
 
 namespace microloop {
 
-class EventSource;
-class ThreadEventSource;
-
 class EventLoop {
-  EventLoop()
+  EventLoop() : thread_pool{4}
   {
     epollfd = epoll_create(1);
     if (epollfd == -1) {
       throw KernelException(errno);
     }
-
-    add_event_source(&signals_monitor);
   }
 
 public:
@@ -44,31 +39,29 @@ public:
 
   void add_event_source(EventSource *event_source)
   {
-    std::uint64_t key = event_source->get_id();
-    if (!event_source->has_fd()) {
-      event_source->set_id(next_thread_id());
-      key = event_source->get_id() << 4;
+    std::uint32_t fd = event_source->get_fd();
+
+    epoll_event ev{};
+    ev.events = event_source->produced_events();
+    ev.data.ptr = static_cast<void *>(event_source);
+
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+      throw microloop::KernelException(errno);
     }
 
-    if (event_source->has_fd()) {
-      epoll_event ev{};
-      ev.events = EPOLLIN | EPOLLOUT;
-      ev.data.fd = event_source->get_id();
+    event_sources[fd] = event_source;
 
-      if (epoll_ctl(epollfd, EPOLL_CTL_ADD, key, &ev) == -1) {
-        throw microloop::KernelException(errno);
-      }
+    if (event_source->native_async()) {
+      event_source->start();
+    } else {
+      thread_pool.submit(&EventSource::start, event_source);
     }
-
-    event_sources[key] = event_source;
-
-    event_source->start();
   }
 
-  bool register_signal_handler(SignalsMonitor::SignalHandler callback)  // TODO
-  {
-    return false;
-  }
+  // bool register_signal_handler(SignalsMonitor::SignalHandler callback)  // TODO
+  // {
+  //   return false;
+  // }
 
   bool next_tick()
   {
@@ -82,24 +75,18 @@ public:
     for (int i = 0; i < ready; i++) {
       auto &event = events_list[i];
 
-      auto key = event.data.fd;
+      auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
 
-      if (key == signals_monitor.get_id()) {
-        signalfd_siginfo signal_info{};
-        if (read(key, &signal_info, sizeof(signalfd_siginfo)) == -1) {
-          throw KernelException(errno);
-        }
-
-        auto thread_id = signal_info.ssi_int;
-        key = thread_id << 4;
+      if (!event_source->is_complete()) {
+        continue;
       }
 
-      auto event_source = event_sources[key];
-
-      event_source->run_callback();
-
-      delete event_source;
-      event_sources.erase(key);  // TODO Check that this calls the destructor.
+      if (event_source->needs_retry()) {
+        thread_pool.submit(&EventSource::start, event_source);
+      } else {
+        event_source->run_callback();
+        remove_event_source(event_source);
+      }
     }
 
     return true;
@@ -111,15 +98,19 @@ public:
   }
 
 private:
-  int next_thread_id() const
+  void remove_event_source(EventSource *event_source)
   {
-    static const auto uint32_max = std::numeric_limits<std::uint32_t>::max();
-    return event_sources.size() % uint32_max;
+    if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event_source->get_fd(), nullptr) == -1) {
+      throw KernelException(errno);
+    }
+
+    event_sources.erase(event_source->get_fd());
+    delete event_source;
   }
 
 private:
   int epollfd;
-  SignalsMonitor signals_monitor;
+  utils::ThreadPool thread_pool;
   std::map<std::uint64_t, EventSource *> event_sources;
 
   static EventLoop *main_instance;

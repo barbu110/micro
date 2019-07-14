@@ -4,8 +4,8 @@
 
 #pragma oonce
 
-#include <map>
 #include <cstdint>
+#include <map>
 
 namespace microloop {
 
@@ -13,7 +13,8 @@ class EventSource;
 
 class EventSourcesTable {
 public:
-  enum LookupType {
+  enum LookupType
+  {
     FD,
     THREAD_ID,
   };
@@ -28,7 +29,7 @@ public:
     return data[get_key(lookup_type, id)];
   }
 
-  void delete(LookupType lookup_type, std::int32_t id)
+  void delete (LookupType lookup_type, std::int32_t id)
   {
     data.erase(get_key(lookup_type, id));
   }
@@ -47,4 +48,4 @@ private:
   std::map<std::uint64_t, EventSource *> data;
 };
 
-}
+}  // namespace microloop

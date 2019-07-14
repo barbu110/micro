@@ -2,21 +2,21 @@
 
 #pragma once
 
-#include <fs_event_source.h>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fs_event_source.h>
 #include <functional>
 #include <iostream>
 #include <kernel_exception.h>
+#include <memory>
 #include <pthread.h>
 #include <signal.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
+#include <tuple>
+#include <unistd.h>
 
 namespace microloop::event_sources::filesystem {
 

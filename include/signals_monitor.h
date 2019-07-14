@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <functional>
 #include <event_source.h>
+#include <functional>
 #include <kernel_exception.h>
 #include <signal.h>
 #include <signals_monitor.h>

@@ -4,13 +4,15 @@
 
 #pragma once
 
+#include <atomic>
 #include <buffer.h>
 #include <event_source.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <kernel_exception.h>
-#include <tuple>
 #include <functional>
+#include <kernel_exception.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <tuple>
+#include <unistd.h>
 
 namespace microloop::event_sources::net {
 
@@ -20,19 +22,39 @@ class Send : public microloop::EventSource {
 public:
   // The socket should be opened in nonblocking mode. We do not issue an fcntl to set
   // it that way because that would waste time.
-  Send(int sock, const microloop::Buffer &buf, Types::Callback callback) :
-      microloop::EventSource{sock},
-      buf{buf}, callback{callback}
+  Send(std::uint32_t sock, const microloop::Buffer &buf, Types::Callback callback) :
+      microloop::EventSource{sock}, buf{buf}, callback{callback}, sent_total{0}
   {}
 
   void start() override
   {
-    ssize_t sent = send(get_id(), buf.data(), buf.size(), 0);
-    if (sent == -1) {
+    auto buf_data = reinterpret_cast<char *>(buf.data());
+    ssize_t sent = send(get_fd(), buf_data + sent_total, buf.size() - sent_total, 0);
+    if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN) {
       throw microloop::KernelException(errno);
     }
 
-    return_object = std::make_tuple(sent);
+    if (sent != -1) {
+      sent_total += sent;
+    }
+
+    mark_complete();
+    return_object = std::make_tuple(sent_total.load());
+  }
+
+  std::uint32_t produced_events() const override
+  {
+    return EPOLLOUT | EPOLLET;
+  }
+
+  bool native_async() const override
+  {
+    return false;
+  }
+
+  bool needs_retry() const override
+  {
+    return sent_total != buf.size();
   }
 
   void run_callback() override
@@ -44,6 +66,12 @@ private:
   microloop::Buffer buf;
   Types::Callback callback;
   Types::ReturnType return_object;
+
+  /**
+   * The number of bytes sent in total during the life of this Send instance. This is used to tell
+   * the event loop it needs to restart the operation
+   */
+  std::atomic<ssize_t> sent_total;
 };
 
-}
+}  // namespace microloop::event_sources::net

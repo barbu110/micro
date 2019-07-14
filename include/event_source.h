@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
+#include <sys/epoll.h>
 #include <tuple>
 
 namespace microloop {
 
 class EventLoop;
+
+// FIXME Use the one in event_source_result.h
 
 template <class... ReturnTypeParams>
 class TypeHelper {
@@ -26,32 +30,53 @@ public:
   {}
 
 protected:
-  EventSource(int id = 0) : id{id}
+  EventSource(std::uint32_t fd = 0) : fd{fd}, complete{false}
   {}
 
-  int get_id() const
+  std::uint32_t get_fd() const
   {
-    return id;
+    return fd;
   }
 
-  void set_id(int id)
+  void set_fd(std::uint32_t fd)
   {
-    this->id = id;
+    this->fd = fd;
   }
 
-  virtual bool has_fd() const
+  virtual std::uint32_t produced_events() const
+  {
+    return EPOLLIN | EPOLLOUT;
+  }
+
+  virtual bool native_async() const
   {
     return true;
   }
 
-  virtual void start()
-  {}
+  virtual void start() = 0;
+
+  virtual bool needs_retry() const
+  {
+    return false;
+  }
 
   virtual void run_callback()
   {}
 
+  bool is_complete() const
+  {
+    return complete;
+  }
+
+protected:
+  void mark_complete()
+  {
+    complete = true;
+  }
+
 private:
-  int id;
+  std::uint32_t fd;
+  std::atomic_bool complete;
 };
 
 }  // namespace microloop

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <buffer.h>
-
 #include <event_loop.h>
 #include <event_sources/filesystem/read.h>
 #include <event_sources/filesystem/write.h>
@@ -15,7 +14,7 @@
 
 namespace microloop::timers {
 
-template<typename Callback>
+template <typename Callback>
 static void set_timeout(int ms, Callback on_done)
 {
   microloop::EventLoop::get_main()->add_event_source(
@@ -65,11 +64,11 @@ static void read(const Filename &filename, MaxLen max_len, Offset offset, Callba
 
 namespace microloop::net::utils {
 
-template<typename Callback>
+template <typename Callback>
 static void send(int sock, const Buffer &buf, Callback on_sent)
 {
   microloop::EventLoop::get_main()->add_event_source(
-    new microloop::event_sources::net::Send(sock, buf, on_sent));
+      new microloop::event_sources::net::Send(sock, buf, on_sent));
 }
 
-}
+}  // namespace microloop::net::utils
