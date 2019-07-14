@@ -4,20 +4,18 @@
 
 #pragma once
 
-#include <atomic>
 #include <algorithm>
+#include <atomic>
+#include <condition_variable>
 #include <cstdint>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <pthread.h>
+#include <queue>
 #include <stdexcept>
 #include <thread>
-#include <utils/debug.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <memory>
-#include <event_source_result.h>
-#include <mutex>
-#include <queue>
-#include <condition_variable>
-#include <functional>
 
 namespace microloop::utils {
 
@@ -26,7 +24,7 @@ class ThreadPool {
   public:
     using Func = std::function<void()>;
 
-    Job(Func&& fn) : fn{fn}
+    Job(Func &&fn) : fn{fn}
     {}
 
     void run()
@@ -52,15 +50,15 @@ public:
         threads.emplace_back(&ThreadPool::worker, this);
         threads.back().detach();
       }
-    } catch(...) {
+    } catch (...) {
       destroy();
 
       throw;
     }
   }
 
-  template<class Func, class... Args>
-  void submit(Func &&fn, Args &&...args)
+  template <class Func, class... Args>
+  void submit(Func &&fn, Args &&... args)
   {
     auto bound_fn = std::bind(std::forward<Func>(fn), std::forward<Args>(args)...);
 
@@ -107,7 +105,7 @@ private:
     lock.unlock();
     cond.notify_all();
 
-    for (auto& thread : threads) {
+    for (auto &thread : threads) {
       if (thread.joinable()) {
         thread.join();
       }
