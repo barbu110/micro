@@ -4,23 +4,24 @@
 
 #include <cstring>
 #include <string>
+#include <cstdint>
 
 namespace microloop {
 
 class Buffer {
   std::size_t sz;
-  void *buf;
+  std::uint8_t *buf;
 
 public:
   explicit Buffer(std::size_t sz) noexcept : sz(sz), buf(malloc(sz))
   {}
 
-  Buffer(const char *src, std::size_t sz) : Buffer(sz)
+  Buffer(const std::uint8_t *src, std::size_t sz) : Buffer(sz)
   {
     std::memcpy(buf, src, sz);
   }
 
-  Buffer(const char *src) : Buffer(strlen(src) + 1)
+  Buffer(const std::uint8_t *src) : Buffer(strlen(src) + 1)
   {
     std::memcpy(buf, src, sz);
   }
