@@ -28,7 +28,7 @@ public:
 
   void start() override
   {
-    auto buf_data = reinterpret_cast<char *>(buf.data());
+    auto buf_data = reinterpret_cast<std::uint8_t *>(buf.data());
     ssize_t sent = send(get_fd(), buf_data + sent_total, buf.size() - sent_total, 0);
     if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN) {
       throw microloop::KernelException(errno);
@@ -38,13 +38,13 @@ public:
       sent_total += sent;
     }
 
-    mark_complete();
+    mark_complete();  // FIXME If EWOULDBLOCK is returned, do not mark as complete.
     return_object = std::make_tuple(sent_total.load());
   }
 
   std::uint32_t produced_events() const override
   {
-    return EPOLLOUT | EPOLLET;
+    return 0;
   }
 
   bool native_async() const override

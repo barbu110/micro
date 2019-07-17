@@ -41,32 +41,33 @@ public:
 
   void start() override
   {
-    std::thread worker{[&]() {
-      std::string file_contents;
-      if (max_len) {
-        file_contents.reserve(max_len);
-      }
+    std::string file_contents;
+    if (max_len) {
+      file_contents.reserve(max_len);
+    }
 
-      auto buf_size = max_len ? max_len : 4096;
-      auto buf = std::make_unique<char[]>(buf_size);
+    auto buf_size = max_len ? max_len : 4096;
+    auto buf = std::make_unique<char[]>(buf_size);
 
-      ssize_t read_count;
-      if (offset) {
-        read_count = pread(fd, buf.get(), buf_size, offset);
-      } else {
-        read_count = read(fd, buf.get(), buf_size);  // We use this to support sockets, pipes etc.
-      }
+    ssize_t read_count;
+    if (offset) {
+      read_count = pread(fd, buf.get(), buf_size, offset);
+    } else {
+      read_count = read(fd, buf.get(), buf_size);  // We use this to support sockets, pipes etc.
+    }
 
-      if (read_count > 0) {
-        file_contents.append(buf.get(), read_count);
-      } else if (read_count < 0) {
-        throw KernelException(errno);
-      }
+    if (read_count > 0) {
+      file_contents.append(buf.get(), read_count);
+    } else if (read_count < 0) {
+      throw KernelException(errno);
+    }
 
-      WORKER_RETURN(file_contents);
-    }};
+    return_object = std::make_tuple(file_contents);
+  }
 
-    worker.detach();
+  bool native_async() const override
+  {
+    return false;
   }
 
   void run_callback() override

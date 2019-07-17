@@ -11,8 +11,7 @@ namespace microloop::errors {
 
 class IOException : public microloop::KernelException {
 public:
-  IOException(int fd, int err) :
-    KernelException{err}, fd{fd}
+  IOException(int fd, int err) : KernelException{err}, fd{fd}
   {}
 
   int get_fd() const
@@ -24,4 +23,4 @@ private:
   int fd;
 };
 
-}
+}  // namespace microloop::errors

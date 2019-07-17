@@ -43,6 +43,12 @@ protected:
     this->fd = fd;
   }
 
+  /**
+   * The events that shall be added to the epoll instance interest list for the file descriptor
+   * wrapped by this event source.
+   * @return If this function returns 0, then the event source is not actually added to the epoll
+   * instance, but is treated according to other policies. See the constructor for details.
+   */
   virtual std::uint32_t produced_events() const
   {
     return EPOLLIN | EPOLLOUT;

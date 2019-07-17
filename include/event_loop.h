@@ -41,20 +41,36 @@ public:
   {
     std::uint32_t fd = event_source->get_fd();
 
-    epoll_event ev{};
-    ev.events = event_source->produced_events();
-    ev.data.ptr = static_cast<void *>(event_source);
+    auto produced_events = event_source->produced_events();
+    if (produced_events) {
+      epoll_event ev{};
+      ev.events = produced_events;
+      ev.data.ptr = static_cast<void *>(event_source);
 
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-      throw microloop::KernelException(errno);
+      if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+        throw microloop::KernelException(errno);
+      }
     }
 
     event_sources[fd] = event_source;
 
-    if (event_source->native_async()) {
+    auto start_wrapper = [&event_source, &produced_events]() {
       event_source->start();
+
+      if (!produced_events) {
+        /*
+         * If the event source does not actually produce any events that may be in the interest of
+         * our event loop, then we wait for the "start" function to end and then execute the
+         * callback.
+         */
+        event_source->run_callback();
+      }
+    };
+
+    if (event_source->native_async()) {
+      start_wrapper();
     } else {
-      thread_pool.submit(&EventSource::start, event_source);
+      thread_pool.submit(start_wrapper);
     }
   }
 
