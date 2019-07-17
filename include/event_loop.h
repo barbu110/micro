@@ -15,6 +15,8 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 #include <utils/thread_pool.h>
+#include <stdexcept>
+#include <sys/socket.h>
 
 namespace microloop {
 
@@ -37,41 +39,45 @@ public:
     return main_instance;
   }
 
+  utils::ThreadPool &get_thread_pool()
+  {
+    return thread_pool;
+  }
+
   void add_event_source(EventSource *event_source)
   {
     std::uint32_t fd = event_source->get_fd();
 
     auto produced_events = event_source->produced_events();
-    if (produced_events) {
-      epoll_event ev{};
-      ev.events = produced_events;
-      ev.data.ptr = static_cast<void *>(event_source);
-
-      if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-        throw microloop::KernelException(errno);
-      }
+    if (!produced_events) {
+      throw std::invalid_argument("produced_events is 0");
     }
 
-    event_sources[fd] = event_source;
+    epoll_event ev{};
+    ev.events = produced_events;
+    ev.data.ptr = static_cast<void *>(event_source);
 
-    auto start_wrapper = [&event_source, &produced_events]() {
-      event_source->start();
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+      throw microloop::KernelException(errno);
+    }
 
-      if (!produced_events) {
-        /*
-         * If the event source does not actually produce any events that may be in the interest of
-         * our event loop, then we wait for the "start" function to end and then execute the
-         * callback.
-         */
-        event_source->run_callback();
-      }
-    };
+    event_sources[fd] = event_source;  // TODO Do we still need storing event soucres in the hashtable?
 
     if (event_source->native_async()) {
-      start_wrapper();
+      event_source->start();
     } else {
-      thread_pool.submit(start_wrapper);
+      thread_pool.submit(&EventSource::start, event_source);
     }
+  }
+
+  void remove_event_source(EventSource *event_source)
+  {
+    if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event_source->get_fd(), nullptr) == -1) {
+      throw KernelException(errno);
+    }
+
+    event_sources.erase(event_source->get_fd());
+    delete event_source;
   }
 
   // bool register_signal_handler(SignalsMonitor::SignalHandler callback)  // TODO
@@ -81,9 +87,9 @@ public:
 
   bool next_tick()
   {
-    epoll_event events_list[128];
+    epoll_event events_list[32];
 
-    auto ready = epoll_wait(epollfd, events_list, 128, -1);
+    auto ready = epoll_wait(epollfd, events_list, 32, -1);
     if (ready < 0) {
       return false;
     }
@@ -93,15 +99,10 @@ public:
 
       auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
 
-      if (!event_source->is_complete()) {
-        continue;
-      }
-
       if (event_source->needs_retry()) {
         thread_pool.submit(&EventSource::start, event_source);
       } else {
         event_source->run_callback();
-        remove_event_source(event_source);
       }
     }
 
@@ -111,17 +112,6 @@ public:
   ~EventLoop()
   {
     close(epollfd);
-  }
-
-private:
-  void remove_event_source(EventSource *event_source)
-  {
-    if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event_source->get_fd(), nullptr) == -1) {
-      throw KernelException(errno);
-    }
-
-    event_sources.erase(event_source->get_fd());
-    delete event_source;
   }
 
 private:

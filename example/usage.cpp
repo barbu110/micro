@@ -16,7 +16,7 @@ using namespace microloop;
 int main(int argc, char **argv)
 {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <ip>:<port> <data>\n";
+    std::cerr << "usage: " << argv[0] << " <ip>:<port>\n";
     return -1;
   }
 
@@ -48,11 +48,6 @@ int main(int argc, char **argv)
   if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
     std::cerr << "fcntl\n";
   }
-
-  microloop::Buffer buf{argv[2], strlen(argv[2])};
-  net::utils::send(sockfd, buf, [](ssize_t written) {
-    std::cout << "Written " << written << " bytes.\n";
-  });
 
   while (true) {
     MICROLOOP_TICK();
