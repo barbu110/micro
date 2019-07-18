@@ -25,6 +25,7 @@ int main(int argc, char **argv)
   }
 
   int port = std::stoi(argv[1]);
+  char *myport = argv[1];
 
   sockaddr_in svaddr;
   socklen_t len;
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
 
   std::cout << "Port: " << port << "\n";
 
-  if (getaddrinfo(nullptr, (const char *) port, &hints, &result) != 0) {
+  if (getaddrinfo(nullptr, (const char *) myport, &hints, &result) != 0) {
     perror("getaddrinfo");
     return 1;
   }
