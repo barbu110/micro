@@ -74,7 +74,6 @@ protected:
     return complete;
   }
 
-protected:
   void mark_complete()
   {
     complete = true;
