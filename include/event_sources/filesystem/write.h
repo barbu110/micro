@@ -18,9 +18,11 @@
 #include <tuple>
 #include <unistd.h>
 
-namespace microloop::event_sources::filesystem {
+namespace microloop::event_sources::filesystem
+{
 
-class Write : public microloop::FsEventSource {
+class Write : public microloop::FsEventSource
+{
   using Types = microloop::TypeHelper<ssize_t>;
 
 public:
@@ -41,16 +43,19 @@ public:
   void start() override
   {
     std::thread worker{[&]() {
-      if (has_filename) {
+      if (has_filename)
+      {
         fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_APPEND | O_NONBLOCK);
       }
 
-      if (fd == -1) {
+      if (fd == -1)
+      {
         throw KernelException(errno);
       }
 
       ssize_t written = write(fd, buffer.c_str(), buffer.size());
-      if (written != buffer.size()) {
+      if (written != buffer.size())
+      {
         throw KernelException(errno);
       }
 

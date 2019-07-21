@@ -7,11 +7,13 @@
 #include <cstdint>
 #include <map>
 
-namespace microloop {
+namespace microloop
+{
 
 class EventSource;
 
-class EventSourcesTable {
+class EventSourcesTable
+{
 public:
   enum LookupType
   {
@@ -37,7 +39,8 @@ public:
 private:
   inline std::uint64_t get_key(LookupType lookup_type, std::int32_t id) const
   {
-    switch (lookup_type) {
+    switch (lookup_type)
+    {
     case FD:
       return id;
     case THREAD_ID:

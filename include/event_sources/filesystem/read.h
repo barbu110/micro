@@ -16,9 +16,11 @@
 #include <tuple>
 #include <unistd.h>
 
-namespace microloop::event_sources::filesystem {
+namespace microloop::event_sources::filesystem
+{
 
-class Read : public microloop::FsEventSource {
+class Read : public microloop::FsEventSource
+{
   using Types = microloop::TypeHelper<std::string>;
 
 public:
@@ -34,7 +36,8 @@ public:
       callback{callback}
   {
     fd = open(filename.c_str(), O_RDONLY | O_NONBLOCK);
-    if (fd == -1) {
+    if (fd == -1)
+    {
       throw KernelException(errno);
     }
   }
@@ -42,7 +45,8 @@ public:
   void start() override
   {
     std::string file_contents;
-    if (max_len) {
+    if (max_len)
+    {
       file_contents.reserve(max_len);
     }
 
@@ -50,15 +54,21 @@ public:
     auto buf = std::make_unique<char[]>(buf_size);
 
     ssize_t read_count;
-    if (offset) {
+    if (offset)
+    {
       read_count = pread(fd, buf.get(), buf_size, offset);
-    } else {
+    }
+    else
+    {
       read_count = read(fd, buf.get(), buf_size);  // We use this to support sockets, pipes etc.
     }
 
-    if (read_count > 0) {
+    if (read_count > 0)
+    {
       file_contents.append(buf.get(), read_count);
-    } else if (read_count < 0) {
+    }
+    else if (read_count < 0)
+    {
       throw KernelException(errno);
     }
 
@@ -87,7 +97,8 @@ private:
 };
 
 #define MICROLOOP_FS_READ(filename, max_len, callback)                                             \
-  do {                                                                                             \
+  do                                                                                               \
+  {                                                                                                \
     microloop::EventLoop::get_main()->add_event_source(                                            \
         new microloop::event_sources::filesystem::Read(filename, max_len, callback));              \
   } while (false)

@@ -9,20 +9,23 @@
 #include <sys/epoll.h>
 #include <tuple>
 
-namespace microloop {
+namespace microloop
+{
 
 class EventLoop;
 
 // FIXME Use the one in event_source_result.h
 
 template <class... ReturnTypeParams>
-class TypeHelper {
+class TypeHelper
+{
 public:
   using ReturnType = std::tuple<ReturnTypeParams...>;
   using Callback = std::function<void(ReturnTypeParams...)>;
 };
 
-class EventSource {
+class EventSource
+{
   friend class EventLoop;
 
 public:

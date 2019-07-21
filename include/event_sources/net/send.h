@@ -14,9 +14,11 @@
 #include <tuple>
 #include <unistd.h>
 
-namespace microloop::event_sources::net {
+namespace microloop::event_sources::net
+{
 
-class Send : public microloop::EventSource {
+class Send : public microloop::EventSource
+{
   using Types = microloop::TypeHelper<ssize_t>;
 
 public:
@@ -30,11 +32,13 @@ public:
   {
     auto buf_data = reinterpret_cast<std::uint8_t *>(buf.data());
     ssize_t sent = send(get_fd(), buf_data + sent_total, buf.size() - sent_total, 0);
-    if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN)
+    {
       throw microloop::KernelException(errno);
     }
 
-    if (sent != -1) {
+    if (sent != -1)
+    {
       sent_total += sent;
     }
 

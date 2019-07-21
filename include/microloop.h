@@ -12,7 +12,8 @@
 #include <event_sources/timeout.h>
 #include <string>
 
-namespace microloop::timers {
+namespace microloop::timers
+{
 
 template <typename Callback>
 static void set_timeout(int ms, Callback on_done)
@@ -23,7 +24,8 @@ static void set_timeout(int ms, Callback on_done)
 
 }  // namespace microloop::timers
 
-namespace microloop::fs {
+namespace microloop::fs
+{
 
 template <typename Filename, typename Buffer, typename Callback>
 static void write(const Filename &filename, const Buffer &buffer, Callback callback)
@@ -62,7 +64,8 @@ static void read(const Filename &filename, MaxLen max_len, Offset offset, Callba
 
 }  // namespace microloop::fs
 
-namespace microloop::net::utils {
+namespace microloop::net::utils
+{
 
 static ssize_t send(int sock, const Buffer &buf)
 {
@@ -70,13 +73,16 @@ static ssize_t send(int sock, const Buffer &buf)
 
   auto buf_data = reinterpret_cast<std::uint8_t *>(buf.data());
 
-  do {
+  do
+  {
     ssize_t sent = ::send(sock, buf_data + total_sent, buf.size() - total_sent, 0);
-    if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (sent == -1 && errno != EWOULDBLOCK && errno != EAGAIN)
+    {
       throw microloop::KernelException(errno);
     }
 
-    if (sent != -1) {
+    if (sent != -1)
+    {
       total_sent += sent;
     }
   } while (total_sent != buf.size());

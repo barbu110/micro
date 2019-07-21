@@ -2,13 +2,15 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstring>
 #include <string>
-#include <cstdint>
 
-namespace microloop {
+namespace microloop
+{
 
-class Buffer {
+class Buffer
+{
   std::size_t sz;
   void *buf;
 

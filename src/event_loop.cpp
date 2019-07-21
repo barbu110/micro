@@ -2,7 +2,8 @@
 
 #include <event_loop.h>
 
-namespace microloop {
+namespace microloop
+{
 
 EventLoop *EventLoop::main_instance = nullptr;
 

@@ -14,6 +14,5 @@
 #include <thread>
 #include <unistd.h>
 
-namespace microloop::event_sources::filesystem {
-
-}  // namespace microloop::event_sources::filesystem
+namespace microloop::event_sources::filesystem
+{}  // namespace microloop::event_sources::filesystem

@@ -9,9 +9,11 @@
 #include <sys/timerfd.h>
 #include <unistd.h>
 
-namespace microloop::event_sources {
+namespace microloop::event_sources
+{
 
-class Timeout : public microloop::EventSource {
+class Timeout : public microloop::EventSource
+{
   using Types = TypeHelper<>;
 
 public:
@@ -30,14 +32,16 @@ protected:
   {
     errno = 0;
     int fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
-    if (fd == -1) {
+    if (fd == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
     set_fd(fd);
 
     itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
-    if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1) {
+    if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1)
+    {
       throw microloop::KernelException(errno);
     }
   }

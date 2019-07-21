@@ -4,33 +4,36 @@
 
 #pragma once
 
+#include <cstdint>
 #include <event_source.h>
 #include <functional>
 #include <kernel_exception.h>
+#include <map>
 #include <signal.h>
 #include <signals_monitor.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
-#include <cstdint>
-#include <map>
 #include <vector>
-#include <unistd.h>
 
-namespace microloop {
+namespace microloop
+{
 
-class SignalsMonitor : public EventSource {
+class SignalsMonitor : public EventSource
+{
 public:
   using SignalHandler = std::function<void(std::uint32_t signal)>;
 
   SignalsMonitor() : EventSource{0}
   {
     sigemptyset(&initial_sigset);
-    if (sigprocmask(SIG_SETMASK, nullptr, &initial_sigset) == -1) {
+    if (sigprocmask(SIG_SETMASK, nullptr, &initial_sigset) == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
     int fd = signalfd(-1, &initial_sigset, SFD_NONBLOCK);
-    if (fd == -1) {
+    if (fd == -1)
+    {
       throw KernelException(errno);
     }
 
@@ -53,16 +56,18 @@ public:
      * for read so the read syscall should not block.
      */
 
-     signalfd_siginfo info{};
-     ssize_t nread = read(get_fd(), &info, sizeof(signalfd_siginfo));
-     if (nread == -1) {
-       throw microloop::KernelException(errno);
-     }
+    signalfd_siginfo info{};
+    ssize_t nread = read(get_fd(), &info, sizeof(signalfd_siginfo));
+    if (nread == -1)
+    {
+      throw microloop::KernelException(errno);
+    }
 
-     std::uint32_t signo = info.ssi_signo;
-     for (const auto &fn : signal_handlers[signo]) {
-       fn(signo);
-     }
+    std::uint32_t signo = info.ssi_signo;
+    for (const auto &fn : signal_handlers[signo])
+    {
+      fn(signo);
+    }
   }
 
   virtual std::uint32_t produced_events() const override
@@ -89,18 +94,21 @@ private:
     sigemptyset(&mask);
     sigaddset(&mask, sig);
 
-    if (sigprocmask(how, &mask, nullptr) == -1) {
+    if (sigprocmask(how, &mask, nullptr) == -1)
+    {
       throw KernelException(errno);
     }
 
     sigset_t abs_mask;
     sigemptyset(&abs_mask);
-    if (sigprocmask(SIG_SETMASK, nullptr, &abs_mask) == -1) {
+    if (sigprocmask(SIG_SETMASK, nullptr, &abs_mask) == -1)
+    {
       throw KernelException(errno);
     }
 
     int fd = signalfd(get_fd(), &abs_mask, SFD_NONBLOCK);  // TODO Check if fd is different.
-    if (fd == -1) {
+    if (fd == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
@@ -110,7 +118,6 @@ private:
   sigset_t initial_sigset;
   sigset_t curr_sigset;
   std::map<std::uint32_t, std::vector<std::function<void(std::uint32_t)>>> signal_handlers;
-
 };
 
 }  // namespace microloop

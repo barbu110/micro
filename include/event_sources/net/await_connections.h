@@ -4,22 +4,23 @@
 
 #pragma once
 
-#include <event_source.h>
 #include <cstdint>
-#include <sys/socket.h>
-#include <kernel_exception.h>
 #include <errno.h>
+#include <event_source.h>
+#include <kernel_exception.h>
+#include <sys/socket.h>
 #include <utility>
 
-namespace microloop::event_sources::net {
+namespace microloop::event_sources::net
+{
 
-class AwaitConnections : public microloop::EventSource {
+class AwaitConnections : public microloop::EventSource
+{
   using Types = microloop::TypeHelper<std::uint32_t, sockaddr_storage, socklen_t>;
 
 public:
   AwaitConnections(std::uint32_t sock, Types::Callback &&callback) :
-      EventSource{sock},
-      callback{std::move(callback)}
+      EventSource{sock}, callback{std::move(callback)}
   {}
 
   void start() override
@@ -35,7 +36,8 @@ public:
     socklen_t addrlen = sizeof(sockaddr_storage);
 
     std::uint32_t conn_fd = accept(get_fd(), reinterpret_cast<sockaddr *>(&peer_addr), &addrlen);
-    if (conn_fd == -1) {
+    if (conn_fd == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
@@ -53,4 +55,4 @@ private:
   Types::Callback callback;
 };
 
-}
+}  // namespace microloop::event_sources::net

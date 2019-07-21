@@ -11,22 +11,25 @@
 #include <limits>
 #include <map>
 #include <signal.h>
+#include <signals_monitor.h>
+#include <stdexcept>
 #include <sys/epoll.h>
 #include <sys/signalfd.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <utils/thread_pool.h>
-#include <stdexcept>
-#include <sys/socket.h>
 #include <vector>
-#include <signals_monitor.h>
 
-namespace microloop {
+namespace microloop
+{
 
-class EventLoop {
+class EventLoop
+{
   EventLoop() : thread_pool{4}
   {
     epollfd = epoll_create(1);
-    if (epollfd == -1) {
+    if (epollfd == -1)
+    {
       throw KernelException(errno);
     }
 
@@ -36,7 +39,8 @@ class EventLoop {
 public:
   static EventLoop *get_main()
   {
-    if (main_instance == nullptr) {
+    if (main_instance == nullptr)
+    {
       main_instance = new EventLoop;
     }
 
@@ -53,7 +57,8 @@ public:
     std::uint32_t fd = event_source->get_fd();
 
     auto produced_events = event_source->produced_events();
-    if (!produced_events) {
+    if (!produced_events)
+    {
       throw std::invalid_argument("produced_events is 0");
     }
 
@@ -61,22 +66,28 @@ public:
     ev.events = produced_events;
     ev.data.ptr = static_cast<void *>(event_source);
 
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
-    event_sources[fd] = event_source;  // TODO Do we still need storing event soucres in the hashtable?
+    event_sources[fd]
+        = event_source;  // TODO Do we still need storing event soucres in the hashtable?
 
-    if (event_source->native_async()) {
+    if (event_source->native_async())
+    {
       event_source->start();
-    } else {
+    }
+    else
+    {
       thread_pool.submit(&EventSource::start, event_source);
     }
   }
 
   void remove_event_source(EventSource *event_source)
   {
-    if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event_source->get_fd(), nullptr) == -1) {
+    if (epoll_ctl(epollfd, EPOLL_CTL_DEL, event_source->get_fd(), nullptr) == -1)
+    {
       throw KernelException(errno);
     }
 
@@ -94,18 +105,23 @@ public:
     epoll_event events_list[32];
 
     auto ready = epoll_pwait(epollfd, events_list, 32, -1, &signals_monitor.get_sigmask());
-    if (ready < 0) {
+    if (ready < 0)
+    {
       return false;
     }
 
-    for (int i = 0; i < ready; i++) {
+    for (int i = 0; i < ready; i++)
+    {
       auto &event = events_list[i];
 
       auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
 
-      if (event_source->needs_retry()) {
+      if (event_source->needs_retry())
+      {
         thread_pool.submit(&EventSource::start, event_source);
-      } else {
+      }
+      else
+      {
         event_source->run_callback();
       }
     }

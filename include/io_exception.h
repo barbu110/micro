@@ -7,9 +7,11 @@
 #include <kernel_exception.h>
 #include <string>
 
-namespace microloop::errors {
+namespace microloop::errors
+{
 
-class IOException : public microloop::KernelException {
+class IOException : public microloop::KernelException
+{
 public:
   IOException(int fd, int err) : KernelException{err}, fd{fd}
   {}

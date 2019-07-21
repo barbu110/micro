@@ -9,16 +9,19 @@
 #include <tuple>
 #include <unistd.h>
 
-namespace microloop {
+namespace microloop
+{
 
 class EventLoop;
 
-class FsEventSource : public EventSource {
+class FsEventSource : public EventSource
+{
   friend class EventLoop;
 };
 
 #define WORKER_RETURN(...)                                                                         \
-  do {                                                                                             \
+  do                                                                                               \
+  {                                                                                                \
     return_object = std::make_tuple(__VA_ARGS__);                                                  \
   } while (false)
 

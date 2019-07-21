@@ -1,20 +1,20 @@
 // Copyright 2019 Victor Barbu
 
+#include <algorithm>
+#include <arpa/inet.h>
+#include <cstring>
 #include <iostream>
+#include <iterator>
 #include <microloop.h>
+#include <net/tcp_server.h>
+#include <netdb.h>
+#include <signal.h>
+#include <sstream>
+#include <stdio.h>
 #include <string>
 #include <sys/socket.h>
-#include <sys/un.h>
-#include <cstring>
-#include <arpa/inet.h>
-#include <algorithm>
-#include <sstream>
-#include <iterator>
 #include <sys/types.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <net/tcp_server.h>
-#include <signal.h>
+#include <sys/un.h>
 
 using namespace microloop;
 
@@ -25,7 +25,8 @@ void signal_handler(int sig)
 
 int main(int argc, char **argv)
 {
-  if (argc < 2) {
+  if (argc < 2)
+  {
     std::cerr << "usage: " << argv[0] << " <port>\n";
     return -1;
   }

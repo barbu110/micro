@@ -13,15 +13,18 @@
 #include <mutex>
 #include <pthread.h>
 #include <queue>
+#include <signal.h>
 #include <stdexcept>
 #include <thread>
 #include <unistd.h>
-#include <signal.h>
 
-namespace microloop::utils {
+namespace microloop::utils
+{
 
-class ThreadPool {
-  class Job {
+class ThreadPool
+{
+  class Job
+  {
   public:
     using Func = std::function<void()>;
 
@@ -40,18 +43,23 @@ class ThreadPool {
 public:
   ThreadPool(std::uint32_t threads_count) : done{false}
   {
-    if (!threads_count) {
+    if (!threads_count)
+    {
       throw std::invalid_argument("threads_count must be at least 1");
     }
 
     threads_count = std::min(std::thread::hardware_concurrency() - 1, threads_count);
 
-    try {
-      for (std::uint8_t i = 0; i != threads_count; ++i) {
+    try
+    {
+      for (std::uint8_t i = 0; i != threads_count; ++i)
+      {
         threads.emplace_back(&ThreadPool::worker, this);
         threads.back().detach();
       }
-    } catch (...) {
+    }
+    catch (...)
+    {
       destroy();
 
       throw;
@@ -86,11 +94,13 @@ private:
      */
     sigset_t mask;
     sigfillset(&mask);
-    if (pthread_sigmask(SIG_SETMASK, &mask, nullptr) != 0) {
+    if (pthread_sigmask(SIG_SETMASK, &mask, nullptr) != 0)
+    {
       throw microloop::KernelException(errno);
     }
 
-    while (!done) {
+    while (!done)
+    {
       std::unique_lock<std::mutex> lock{mtx};
       cond.wait(lock, [&] { return !jobs.empty(); });
 
@@ -109,15 +119,18 @@ private:
     done = true;
 
     std::unique_lock<std::mutex> lock{mtx};
-    while (!jobs.empty()) {
+    while (!jobs.empty())
+    {
       jobs.pop();
     }
 
     lock.unlock();
     cond.notify_all();
 
-    for (auto &thread : threads) {
-      if (thread.joinable()) {
+    for (auto &thread : threads)
+    {
+      if (thread.joinable())
+      {
         thread.join();
       }
     }

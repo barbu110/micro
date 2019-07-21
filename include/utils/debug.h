@@ -7,7 +7,8 @@
 #include <ctime>
 #include <iostream>
 
-namespace microloop::utils {
+namespace microloop::utils
+{
 
 #if defined(DEBUG)
 

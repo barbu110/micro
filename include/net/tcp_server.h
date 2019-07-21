@@ -4,26 +4,29 @@
 
 #pragma once
 
-#include <string>
-#include <sstream>
+#include <arpa/inet.h>
 #include <cstdint>
 #include <cstring>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <errno.h>
 #include <event_loop.h>
 #include <event_sources/net/await_connections.h>
-#include <errno.h>
 #include <functional>
 #include <map>
+#include <netdb.h>
+#include <sstream>
+#include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
-namespace microloop::net {
+namespace microloop::net
+{
 
-class TcpServer {
+class TcpServer
+{
 public:
-  struct PeerConnection {
+  struct PeerConnection
+  {
     TcpServer *server;
     sockaddr_storage addr;
     std::uint32_t fd;
@@ -34,14 +37,13 @@ public:
     auto port_str = std::to_string(port);
 
     addrinfo *results;
-    addrinfo hints{
-      .ai_socktype = SOCK_STREAM,
-      .ai_family = AF_UNSPEC,
-      .ai_flags = AI_PASSIVE | AI_NUMERICSERV
-    };
+    addrinfo hints{.ai_socktype = SOCK_STREAM,
+        .ai_family = AF_UNSPEC,
+        .ai_flags = AI_PASSIVE | AI_NUMERICSERV};
 
     auto err_code = getaddrinfo(nullptr, port_str.c_str(), &hints, &results);
-    if (err_code != 0) {
+    if (err_code != 0)
+    {
       std::stringstream err;
       err << __FUNCTION__ << ": " << gai_strerror(err_code);
 
@@ -49,14 +51,17 @@ public:
     }
 
     auto r = results;
-    for (; r != nullptr; r = r->ai_next) {
+    for (; r != nullptr; r = r->ai_next)
+    {
       server_fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-      if (server_fd == -1) {
+      if (server_fd == -1)
+      {
         continue;
       }
 
       int val = 1;
-      if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1) {
+      if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1)
+      {
         /*
          * See http://man7.org/linux/man-pages/man3/strerror.3.html#NOTES for explanation
          */
@@ -70,7 +75,8 @@ public:
         throw std::runtime_error(err.str());
       }
 
-      if (bind(server_fd, r->ai_addr, r->ai_addrlen) == 0) {
+      if (bind(server_fd, r->ai_addr, r->ai_addrlen) == 0)
+      {
         /*
          * We now have a valid socket.
          */
@@ -80,16 +86,19 @@ public:
       close(server_fd);
     }
 
-    if (server_fd == 0) {
+    if (server_fd == 0)
+    {
       std::stringstream err;
-      err << __FUNCTION__ << ": " << "Failed to bind to port " << port;
+      err << __FUNCTION__ << ": "
+          << "Failed to bind to port " << port;
 
       throw std::runtime_error(err.str());
     }
 
     freeaddrinfo(results);
 
-    if (listen(server_fd, 64) == -1) {
+    if (listen(server_fd, 64) == -1)
+    {
       throw microloop::KernelException(errno);
     }
 
@@ -97,10 +106,10 @@ public:
     auto connection_handler = std::bind(&TcpServer::handle_connection, this, _1, _2, _3);
 
     microloop::EventLoop::get_main()->add_event_source(
-      new microloop::event_sources::net::AwaitConnections(server_fd, connection_handler)
-    );
+        new microloop::event_sources::net::AwaitConnections(server_fd, connection_handler));
 
-    while (true) {
+    while (true)
+    {
       MICROLOOP_TICK();
     }
   }
@@ -137,4 +146,4 @@ private:
   std::map<std::uint32_t, PeerConnection> peer_connections;
 };
 
-}
+}  // namespace microloop::net
