@@ -17,6 +17,8 @@
 #include <utils/thread_pool.h>
 #include <stdexcept>
 #include <sys/socket.h>
+#include <vector>
+#include <signals_monitor.h>
 
 namespace microloop {
 
@@ -27,6 +29,8 @@ class EventLoop {
     if (epollfd == -1) {
       throw KernelException(errno);
     }
+
+    add_event_source(&signals_monitor);
   }
 
 public:
@@ -80,10 +84,10 @@ public:
     delete event_source;
   }
 
-  // bool register_signal_handler(SignalsMonitor::SignalHandler callback)  // TODO
-  // {
-  //   return false;
-  // }
+  inline void register_signal_handler(std::uint32_t sig, SignalsMonitor::SignalHandler &&callback)
+  {
+    signals_monitor.register_signal_handler(sig, std::move(callback));
+  }
 
   bool next_tick()
   {
@@ -117,6 +121,7 @@ public:
 private:
   int epollfd;
   utils::ThreadPool thread_pool;
+  SignalsMonitor signals_monitor;
   std::map<std::uint64_t, EventSource *> event_sources;
 
   static EventLoop *main_instance;
