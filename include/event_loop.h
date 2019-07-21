@@ -93,7 +93,7 @@ public:
   {
     epoll_event events_list[32];
 
-    auto ready = epoll_wait(epollfd, events_list, 32, -1);
+    auto ready = epoll_pwait(epollfd, events_list, 32, -1, &signals_monitor.get_sigmask());
     if (ready < 0) {
       return false;
     }
