@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <thread>
 #include <unistd.h>
+#include <signal.h>
 
 namespace microloop::utils {
 
@@ -79,6 +80,16 @@ public:
 private:
   void worker()
   {
+    /*
+     * We block all signals on the worker threads. Signals will only be received by the rooot thread
+     * in the signalfd mechanism.
+     */
+    sigset_t mask;
+    sigfillset(&mask);
+    if (pthread_sigmask(SIG_SETMASK, &mask, nullptr) != 0) {
+      throw microloop::KernelException(errno);
+    }
+
     while (!done) {
       std::unique_lock<std::mutex> lock{mtx};
       cond.wait(lock, [&] { return !jobs.empty(); });
