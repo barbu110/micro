@@ -21,7 +21,13 @@ namespace microloop
 class SignalsMonitor : public EventSource
 {
 public:
-  using SignalHandler = std::function<void(std::uint32_t signal)>;
+  /**
+   * Callbacks to be called when signals are received by the application. The callback receives the
+   * signal number as parameter. The callback should return true if, from its perspective the
+   * application can end after its execution. If the application is not considered ready to be
+   * closed after the signal is received then false should be returned.
+   */
+  using SignalHandler = std::function<bool(std::uint32_t signal)>;
 
   SignalsMonitor() : EventSource{0}
   {
@@ -63,10 +69,19 @@ public:
       throw microloop::KernelException(errno);
     }
 
+    bool can_exit = true;
     std::uint32_t signo = info.ssi_signo;
     for (const auto &fn : signal_handlers[signo])
     {
-      fn(signo);
+      if (!fn(signo))
+      {
+        can_exit = false;
+      }
+    }
+
+    if (can_exit)
+    {
+      _exit(signo);
     }
   }
 
@@ -117,7 +132,7 @@ private:
 
   sigset_t initial_sigset;
   sigset_t curr_sigset;
-  std::map<std::uint32_t, std::vector<std::function<void(std::uint32_t)>>> signal_handlers;
+  std::map<std::uint32_t, std::vector<SignalHandler>> signal_handlers;
 };
 
 }  // namespace microloop
