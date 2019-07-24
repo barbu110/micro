@@ -18,9 +18,10 @@
 
 using namespace microloop;
 
-void signal_handler(int sig)
+bool signal_handler(int sig)
 {
   std::cout << "Received signal " << sig << "\n";
+  return true;
 }
 
 int main(int argc, char **argv)
@@ -35,4 +36,9 @@ int main(int argc, char **argv)
 
   auto port = std::stoi(argv[1]);
   auto tcp_server = microloop::net::TcpServer(port);
+
+  while (true)
+  {
+    MICROLOOP_TICK();
+  }
 }

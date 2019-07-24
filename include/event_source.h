@@ -22,6 +22,20 @@ class TypeHelper
 public:
   using ReturnType = std::tuple<ReturnTypeParams...>;
   using Callback = std::function<void(ReturnTypeParams...)>;
+
+protected:
+  void set_return_object(ReturnType &&obj)
+  {
+    return_object = std::move(obj);
+  }
+
+  const ReturnType &get_return_object() const
+  {
+    return return_object;
+  }
+
+private:
+  ReturnType return_object;
 };
 
 class EventSource

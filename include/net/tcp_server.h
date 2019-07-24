@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <event_loop.h>
 #include <event_sources/net/await_connections.h>
+#include <event_sources/net/receive.h>
 #include <functional>
 #include <map>
 #include <netdb.h>
@@ -86,7 +87,7 @@ public:
       close(server_fd);
     }
 
-    if (server_fd == 0)
+    if (r == nullptr)
     {
       std::stringstream err;
       err << __FUNCTION__ << ": "
@@ -108,35 +109,70 @@ public:
     microloop::EventLoop::get_main()->add_event_source(
         new microloop::event_sources::net::AwaitConnections(server_fd, connection_handler));
 
-    while (true)
-    {
-      MICROLOOP_TICK();
-    }
+    auto termination_handler = [&](std::uint32_t sig) {
+      std::cout << "Terminating...\n";
+      destroy();
+
+      return true;
+    };
+
+    microloop::EventLoop::get_main()->register_signal_handler(SIGINT, termination_handler);
   }
 
   virtual ~TcpServer()  // TODO Do we need to send something to peer sockets?
   {
-    close(server_fd);
+    destroy();
   }
-
-  // template <class Func>
-  // virtual void on_connect(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_request(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_disconnect(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_shutdown(Func &&fn);
 
 private:
   void handle_connection(std::uint32_t fd, sockaddr_storage addr, socklen_t addrlen)
   {
-    std::cout << "Connection received on socket " << fd << "\n";
+    using microloop::event_sources::net::Receive;
+    using namespace std::placeholders;
 
     peer_connections.emplace(fd, PeerConnection{this, addr, fd});
+
+    auto on_recv = std::bind(&TcpServer::on_data, this, peer_connections[fd], _1);
+    microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, std::move(on_recv)));
+  }
+
+  void on_data(const PeerConnection &conn, const microloop::Buffer &buf)
+  {
+    if (buf.empty())
+    {
+      /*
+       * When the buffer is empty, the socket is in EOF condition. This indicates the cononection
+       * has been closed by the remote peer, so the correct way to treat this condition on our side
+       * is to close the socket.
+       */
+
+      send(conn.fd, "received", 9, 0);
+
+      close_connection(conn);
+      return;
+    }
+
+    std::cout << "Received data: length = " << buf.size() << "; " << static_cast<char *>(buf.data()) << "\n";
+  }
+
+  void close_connection(const PeerConnection &conn)
+  {
+    if (close(conn.fd) == -1)
+    {
+      throw microloop::KernelException(errno);
+    }
+
+    peer_connections.erase(conn.fd);
+  }
+
+  void destroy()
+  {
+    for (const auto &it : peer_connections)
+    {
+      close(it.first);
+    }
+
+    close(server_fd);
   }
 
 private:
@@ -144,6 +180,9 @@ private:
   std::uint32_t server_fd;
 
   std::map<std::uint32_t, PeerConnection> peer_connections;
+
+  std::function<void(PeerConnection&)> connection_handler;
+  std::function<void(PeerConnection&, const microloop::Buffer&)> data_handler;
 };
 
 }  // namespace microloop::net
