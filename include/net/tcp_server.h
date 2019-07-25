@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <event_loop.h>
 #include <event_sources/net/await_connections.h>
+#include <event_sources/net/receive.h>
 #include <functional>
 #include <map>
 #include <netdb.h>
@@ -30,9 +31,25 @@ public:
     TcpServer *server;
     sockaddr_storage addr;
     std::uint32_t fd;
+
+    void close()
+    {
+      if (::close(fd) == -1)
+      {
+        throw microloop::KernelException(errno);
+      }
+
+      server->peer_connections.erase(fd);
+    }
   };
 
-  TcpServer(std::uint16_t port) : port{port}, server_fd{0}
+private:
+  using ConnectionHandler = std::function<void(PeerConnection &)>;
+  using DataHandler = std::function<void(PeerConnection &, const microloop::Buffer &)>;
+
+public:
+  TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data) :
+      port{port}, server_fd{0}, on_conn{std::move(on_conn)}, on_data{std::move(on_data)}
   {
     auto port_str = std::to_string(port);
 
@@ -86,7 +103,7 @@ public:
       close(server_fd);
     }
 
-    if (server_fd == 0)
+    if (r == nullptr)
     {
       std::stringstream err;
       err << __FUNCTION__ << ": "
@@ -108,35 +125,44 @@ public:
     microloop::EventLoop::get_main()->add_event_source(
         new microloop::event_sources::net::AwaitConnections(server_fd, connection_handler));
 
-    while (true)
-    {
-      MICROLOOP_TICK();
-    }
+    auto termination_handler = [&](std::uint32_t sig) {
+      std::cout << "Terminating...\n";
+      destroy();
+
+      return true;
+    };
+
+    microloop::EventLoop::get_main()->register_signal_handler(SIGINT, termination_handler);
   }
 
-  virtual ~TcpServer()  // TODO Do we need to send something to peer sockets?
+  virtual ~TcpServer()
   {
-    close(server_fd);
+    destroy();
   }
-
-  // template <class Func>
-  // virtual void on_connect(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_request(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_disconnect(Func &&fn);
-  //
-  // template <class Func>
-  // virtual void on_shutdown(Func &&fn);
 
 private:
   void handle_connection(std::uint32_t fd, sockaddr_storage addr, socklen_t addrlen)
   {
-    std::cout << "Connection received on socket " << fd << "\n";
+    using microloop::event_sources::net::Receive;
+    using namespace std::placeholders;
 
-    peer_connections.emplace(fd, PeerConnection{this, addr, fd});
+    PeerConnection conn{this, addr, fd};
+    peer_connections.emplace(fd, conn);
+
+    auto bound_on_data = std::bind(on_data, conn, _1);
+    microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, bound_on_data));
+
+    on_conn(conn);
+  }
+
+  void destroy()
+  {
+    for (auto &it : peer_connections)
+    {
+      it.second.close();
+    }
+
+    close(server_fd);
   }
 
 private:
@@ -144,6 +170,9 @@ private:
   std::uint32_t server_fd;
 
   std::map<std::uint32_t, PeerConnection> peer_connections;
+
+  ConnectionHandler on_conn;
+  DataHandler on_data;
 };
 
 }  // namespace microloop::net

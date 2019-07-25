@@ -15,6 +15,9 @@ class Buffer
   void *buf;
 
 public:
+  Buffer() noexcept : sz{0}, buf{nullptr}
+  {}
+
   explicit Buffer(std::size_t sz) noexcept : sz(sz), buf(malloc(sz))
   {}
 
@@ -61,6 +64,11 @@ public:
   std::size_t size() const noexcept
   {
     return sz;
+  }
+
+  bool empty() const noexcept
+  {
+    return sz == 0;
   }
 
   void resize(std::size_t new_size) noexcept
