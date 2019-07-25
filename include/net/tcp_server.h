@@ -43,7 +43,13 @@ public:
     }
   };
 
-  TcpServer(std::uint16_t port) : port{port}, server_fd{0}
+private:
+  using ConnectionHandler = std::function<void(PeerConnection &)>;
+  using DataHandler = std::function<void(PeerConnection &, const microloop::Buffer &)>;
+
+public:
+  TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data) :
+      port{port}, server_fd{0}, on_conn{std::move(on_conn)}, on_data{std::move(on_data)}
   {
     auto port_str = std::to_string(port);
 
@@ -140,27 +146,13 @@ private:
     using microloop::event_sources::net::Receive;
     using namespace std::placeholders;
 
-    peer_connections.emplace(fd, PeerConnection{this, addr, fd});
+    PeerConnection conn{this, addr, fd};
+    peer_connections.emplace(fd, conn);
 
-    auto on_recv = std::bind(&TcpServer::on_data, this, peer_connections[fd], _1);
-    microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, std::move(on_recv)));
-  }
+    auto bound_on_data = std::bind(std::move(on_data), conn, _1);
+    microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, bound_on_data));
 
-  void on_data(PeerConnection &conn, const microloop::Buffer &buf)
-  {
-    if (buf.empty())
-    {
-      /*
-       * When the buffer is empty, the socket is in EOF condition. This indicates the cononection
-       * has been closed by the remote peer, so the correct way to treat this condition on our side
-       * is to close the socket.
-       */
-
-      conn.close();
-      return;
-    }
-
-    std::cout << "Received data: length = " << buf.size() << "; " << static_cast<char *>(buf.data()) << "\n";
+    on_conn(conn);
   }
 
   void destroy()
@@ -179,8 +171,8 @@ private:
 
   std::map<std::uint32_t, PeerConnection> peer_connections;
 
-  std::function<void(PeerConnection&)> connection_handler;
-  std::function<void(PeerConnection&, const microloop::Buffer&)> data_handler;
+  ConnectionHandler on_conn;
+  DataHandler on_data;
 };
 
 }  // namespace microloop::net
