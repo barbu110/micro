@@ -31,6 +31,16 @@ public:
     TcpServer *server;
     sockaddr_storage addr;
     std::uint32_t fd;
+
+    void close()
+    {
+      if (::close(fd) == -1)
+      {
+        throw microloop::KernelException(errno);
+      }
+
+      server->peer_connections.erase(fd);
+    }
   };
 
   TcpServer(std::uint16_t port) : port{port}, server_fd{0}
@@ -136,7 +146,7 @@ private:
     microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, std::move(on_recv)));
   }
 
-  void on_data(const PeerConnection &conn, const microloop::Buffer &buf)
+  void on_data(PeerConnection &conn, const microloop::Buffer &buf)
   {
     if (buf.empty())
     {
@@ -146,30 +156,18 @@ private:
        * is to close the socket.
        */
 
-      send(conn.fd, "received", 9, 0);
-
-      close_connection(conn);
+      conn.close();
       return;
     }
 
     std::cout << "Received data: length = " << buf.size() << "; " << static_cast<char *>(buf.data()) << "\n";
   }
 
-  void close_connection(const PeerConnection &conn)
-  {
-    if (close(conn.fd) == -1)
-    {
-      throw microloop::KernelException(errno);
-    }
-
-    peer_connections.erase(conn.fd);
-  }
-
   void destroy()
   {
-    for (const auto &it : peer_connections)
+    for (auto &it : peer_connections)
     {
-      close(it.first);
+      it.second.close();
     }
 
     close(server_fd);
