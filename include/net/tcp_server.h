@@ -135,7 +135,7 @@ public:
     microloop::EventLoop::get_main()->register_signal_handler(SIGINT, termination_handler);
   }
 
-  virtual ~TcpServer()  // TODO Do we need to send something to peer sockets?
+  virtual ~TcpServer()
   {
     destroy();
   }
@@ -149,7 +149,7 @@ private:
     PeerConnection conn{this, addr, fd};
     peer_connections.emplace(fd, conn);
 
-    auto bound_on_data = std::bind(std::move(on_data), conn, _1);
+    auto bound_on_data = std::bind(on_data, conn, _1);
     microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, bound_on_data));
 
     on_conn(conn);
