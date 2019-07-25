@@ -40,8 +40,6 @@ public:
   {
     if (oneshot)
     {
-      std::cout << "Running in ONESHOT mode\n";
-
       run_recv();
     }
   }
@@ -50,8 +48,6 @@ public:
   {
     if (!oneshot)
     {
-      std::cout << "Running in recurring mode\n";
-
       run_recv();
     }
 
@@ -67,14 +63,12 @@ private:
     {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
       {
-        std::cout << "Received EAGAIN\n";
         return;
       }
 
       throw microloop::KernelException(errno);
     }
 
-    std::cout << "Read " << nrecv << " bytes.\n";
     buf.resize(nrecv);
 
     set_return_object(buf);
