@@ -4,21 +4,14 @@
 
 #pragma once
 
-#include <arpa/inet.h>
 #include <cstdint>
-#include <cstring>
-#include <errno.h>
 #include <event_loop.h>
 #include <event_sources/net/await_connections.h>
 #include <event_sources/net/receive.h>
 #include <functional>
 #include <map>
-#include <netdb.h>
-#include <sstream>
 #include <string>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
 
 namespace microloop::net
 {

@@ -5,6 +5,10 @@
 #include "net/tcp_server.h"
 
 #include <stdexcept>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netdb.h>
+#include <sstream>
 
 #include "utils/error.h"
 
