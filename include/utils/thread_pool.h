@@ -6,7 +6,6 @@
 
 #include "kernel_exception.h"
 
-#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
