@@ -12,12 +12,8 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <pthread.h>
 #include <queue>
-#include <signal.h>
-#include <stdexcept>
 #include <thread>
-#include <unistd.h>
 
 namespace microloop::utils
 {

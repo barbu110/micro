@@ -4,6 +4,9 @@
 
 #include "utils/thread_pool.h"
 
+#include <pthread.h>
+#include <signal.h>
+
 namespace microloop::utils
 {
 

@@ -10,6 +10,7 @@
 #include <event_sources/net/receive.h>
 #include <functional>
 #include <map>
+#include <signal.h>
 #include <string>
 #include <sys/socket.h>
 

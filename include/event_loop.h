@@ -5,11 +5,12 @@
 #pragma once
 
 #include "event_source.h"
+#include "signals_monitor.h"
 #include "utils/thread_pool.h"
 
 #include <cstdint>
 #include <map>
-#include <signals_monitor.h>
+#include <unistd.h>
 
 namespace microloop
 {
