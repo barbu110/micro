@@ -3,12 +3,16 @@ sudo: require
 language: cpp
 compiler: clang
 addons:
+  snaps:
+    - name: cmake
+      channel: 3.14/stable
   apt:
+    update: true
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - cmake
       - make
+before_install
 script:
   - clang --version
   - cmake --version
