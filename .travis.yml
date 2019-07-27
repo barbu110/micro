@@ -5,14 +5,9 @@ compiler: clang
 addons:
   snaps:
     - name: cmake
+      confinement: classic
       channel: 3.14/stable
-  apt:
-    update: true
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - make
-before_install
+    - name: make
 script:
   - clang --version
   - cmake --version
