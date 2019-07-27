@@ -7,8 +7,10 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_library(microloop SHARED
-        src/event_loop.cpp
-        src/event_sources/filesystem/read.cpp)
+  src/event_loop.cpp
+  src/event_sources/filesystem/read.cpp
+  src/utils/error.cpp
+  src/net/tcp_server.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
