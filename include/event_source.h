@@ -26,7 +26,7 @@ public:
 protected:
   void set_return_object(ReturnType &&obj)
   {
-    return_object = std::move(obj);
+    return_object = obj;  // TODO Should we std::move(obj)?
   }
 
   const ReturnType &get_return_object() const
