@@ -39,7 +39,7 @@ void EventLoop::add_event_source(EventSource *event_source)
   auto produced_events = event_source->produced_events();
   if (!produced_events)
   {
-    throw std::invalid_argument("produced_events is 0");
+    throw std::invalid_argument("the event source produces no events");
   }
 
   epoll_event ev{};
@@ -90,15 +90,7 @@ bool EventLoop::next_tick()
     auto &event = events_list[i];
 
     auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
-
-    if (event_source->needs_retry())
-    {
-      thread_pool.submit(&EventSource::start, event_source);
-    }
-    else
-    {
-      event_source->run_callback();
-    }
+    event_source->run_callback();
   }
 
   return true;
