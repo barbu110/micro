@@ -10,12 +10,13 @@
 #include <event_source.h>
 #include <kernel_exception.h>
 #include <sys/socket.h>
+#include <buffer.h>
 
 namespace microloop::event_sources::net
 {
 
 template <bool oneshot = true>
-class Receive : public microloop::EventSource, public microloop::TypeHelper<Buffer>
+class Receive : public microloop::EventSource, public microloop::TypeHelper<microloop::Buffer>
 {
 public:
   static const std::uint32_t DEFAULT_MAX_READ_SIZE = 4096;  // The default page size on many systems
