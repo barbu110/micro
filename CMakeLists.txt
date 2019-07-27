@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_library(microloop SHARED
   src/event_loop.cpp
-  src/event_sources/filesystem/read.cpp
+  src/signals_monitor.cpp
   src/utils/error.cpp
   src/net/tcp_server.cpp)
 

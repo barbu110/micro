@@ -18,6 +18,8 @@
 #include <thread>
 #include <unistd.h>
 
+#include "kernel_exception.h"
+
 namespace microloop::utils
 {
 
