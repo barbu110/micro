@@ -7,7 +7,10 @@ addons:
     - name: cmake
       confinement: classic
       channel: 3.14/stable
-    - name: make
+  apt:
+    update: true
+    packages:
+      - make
 script:
   - clang --version
   - cmake --version
