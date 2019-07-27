@@ -13,10 +13,6 @@ addons:
       - make
 script:
   - clang --version
-  - which cmake
-  - echo $PATH
-  - cmake --version
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make
+  - /snap/bin/cmake --version
+  - /snap/bin/cmake -S . -B build
+  - /snap/bin/cmake --build build
