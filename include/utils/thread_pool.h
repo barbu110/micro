@@ -4,19 +4,16 @@
 
 #pragma once
 
-#include <algorithm>
+#include "kernel_exception.h"
+
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <pthread.h>
 #include <queue>
-#include <signal.h>
-#include <stdexcept>
 #include <thread>
-#include <unistd.h>
 
 namespace microloop::utils
 {
@@ -41,31 +38,20 @@ class ThreadPool
   };
 
 public:
-  ThreadPool(std::uint32_t threads_count) : done{false}
-  {
-    if (!threads_count)
-    {
-      throw std::invalid_argument("threads_count must be at least 1");
-    }
+  /**
+   * Constructs the thread pool with the given number of threads.
+   * @param threads_count How many threads to spawn. If this number exceeds the number of physical
+   * threads available on the system minus one, then it's set to that. A minimum of one thread is
+   * spawned.
+   */
+  ThreadPool(std::uint32_t threads_count);
 
-    threads_count = std::min(std::thread::hardware_concurrency() - 1, threads_count);
-
-    try
-    {
-      for (std::uint8_t i = 0; i != threads_count; ++i)
-      {
-        threads.emplace_back(&ThreadPool::worker, this);
-        threads.back().detach();
-      }
-    }
-    catch (...)
-    {
-      destroy();
-
-      throw;
-    }
-  }
-
+  /**
+   * Submit a new job to the thread pool. Note that the thread pool is not responsible for
+   * processing the results of the job function.
+   * @param fn The function representing the job.
+   * @param args Arguments to pass to the given function.
+   */
   template <class Func, class... Args>
   void submit(Func &&fn, Args &&... args)
   {
@@ -80,62 +66,31 @@ public:
     cond.notify_one();
   }
 
+  /**
+   * Close the thread pool.
+   */
   void close()
   {
     destroy();
   }
 
 private:
-  void worker()
-  {
-    /*
-     * We block all signals on the worker threads. Signals will only be received by the rooot thread
-     * in the signalfd mechanism.
-     */
-    sigset_t mask;
-    sigfillset(&mask);
-    if (pthread_sigmask(SIG_SETMASK, &mask, nullptr) != 0)
-    {
-      throw microloop::KernelException(errno);
-    }
+  /**
+   * The thread worker. This function is responsible for:
+   *  1) Blocking all the signals on the thread it represents. (This is required in the context of
+   *     the SignalsMonitor)
+   *  2) Waiting for new jobs and completing them when woke up.
+   */
+  void worker();
 
-    while (!done)
-    {
-      std::unique_lock<std::mutex> lock{mtx};
-      cond.wait(lock, [&] { return !jobs.empty(); });
+  /**
+   * Destroys the thread pool (closing all the threads and clearing jobs).
+   */
+  void destroy();
 
-      auto curr_job = std::move(jobs.front());
-      jobs.pop();
-
-      lock.unlock();
-      cond.notify_one();
-
-      curr_job->run();
-    }
-  }
-
-  void destroy()
-  {
-    done = true;
-
-    std::unique_lock<std::mutex> lock{mtx};
-    while (!jobs.empty())
-    {
-      jobs.pop();
-    }
-
-    lock.unlock();
-    cond.notify_all();
-
-    for (auto &thread : threads)
-    {
-      if (thread.joinable())
-      {
-        thread.join();
-      }
-    }
-  }
-
+  /**
+   * Vector of created threads.
+   */
   std::vector<std::thread> threads;
 
   /**
@@ -143,7 +98,12 @@ private:
    * closed.
    */
   std::atomic_bool done;
+
+  /**
+   * Jobs to be executed by worker threads.
+   */
   std::queue<std::unique_ptr<Job>> jobs;
+
   mutable std::mutex mtx;
   std::condition_variable cond;
 };

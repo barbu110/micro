@@ -42,7 +42,6 @@ public:
       sent_total += sent;
     }
 
-    mark_complete();  // FIXME If EWOULDBLOCK is returned, do not mark as complete.
     return_object = std::make_tuple(sent_total.load());
   }
 
@@ -54,11 +53,6 @@ public:
   bool native_async() const override
   {
     return false;
-  }
-
-  bool needs_retry() const override
-  {
-    return sent_total != buf.size();
   }
 
   void run_callback() override
