@@ -13,6 +13,8 @@ addons:
       - make
 script:
   - clang --version
+  - which cmake
+  - echo $PATH
   - cmake --version
   - mkdir build
   - cd build
