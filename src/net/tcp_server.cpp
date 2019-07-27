@@ -4,13 +4,13 @@
 
 #include "net/tcp_server.h"
 
-#include <stdexcept>
+#include "utils/error.h"
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
 #include <sstream>
-
-#include "utils/error.h"
+#include <stdexcept>
 
 namespace microloop::net
 {
@@ -30,9 +30,8 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
   auto port_str = std::to_string(port);
 
   addrinfo *results;
-  addrinfo hints{.ai_socktype = SOCK_STREAM,
-      .ai_family = AF_UNSPEC,
-      .ai_flags = AI_PASSIVE | AI_NUMERICSERV};
+  addrinfo hints{
+      .ai_socktype = SOCK_STREAM, .ai_family = AF_UNSPEC, .ai_flags = AI_PASSIVE | AI_NUMERICSERV};
 
   auto err_code = getaddrinfo(nullptr, port_str.c_str(), &hints, &results);
   if (err_code != 0)

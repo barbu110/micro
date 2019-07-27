@@ -5,12 +5,12 @@
 #pragma once
 
 #include <atomic>
+#include <buffer.h>
 #include <cstdint>
 #include <errno.h>
 #include <event_source.h>
 #include <kernel_exception.h>
 #include <sys/socket.h>
-#include <buffer.h>
 
 namespace microloop::event_sources::net
 {

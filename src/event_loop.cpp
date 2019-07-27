@@ -104,6 +104,4 @@ bool EventLoop::next_tick()
   return true;
 }
 
-
-
 }  // namespace microloop

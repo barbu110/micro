@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "event_source.h"
+
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <vector>
-
-#include "event_source.h"
 
 namespace microloop
 {

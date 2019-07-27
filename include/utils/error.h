@@ -18,4 +18,4 @@ namespace microloop::utils::error
  */
 std::string strerror(std::uint32_t err);
 
-}
+}  // namespace microloop::utils::error

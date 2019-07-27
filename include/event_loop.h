@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "event_source.h"
+#include "utils/thread_pool.h"
+
 #include <cstdint>
 #include <map>
 #include <signals_monitor.h>
-
-#include "event_source.h"
-#include "utils/thread_pool.h"
 
 namespace microloop
 {

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "kernel_exception.h"
+
 #include <algorithm>
 #include <atomic>
 #include <condition_variable>
@@ -17,8 +19,6 @@
 #include <stdexcept>
 #include <thread>
 #include <unistd.h>
-
-#include "kernel_exception.h"
 
 namespace microloop::utils
 {

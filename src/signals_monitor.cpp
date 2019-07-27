@@ -4,12 +4,11 @@
 
 #include "signals_monitor.h"
 
+#include "kernel_exception.h"
+
 #include <signal.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
-
-#include "kernel_exception.h"
-
 
 namespace microloop
 {
@@ -107,5 +106,4 @@ void SignalsMonitor::update_sigmask(int how, int sig)
   curr_sigset = abs_mask;
 }
 
-
-}
+}  // namespace microloop
