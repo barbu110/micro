@@ -6,6 +6,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_BUILD_TYPE Debug)
 
+include(CheckIncludeFiles)
+check_include_files("sys/epoll.h" HAVE_EPOLL)
+check_include_files("sys/event.h;sys/types.h" HAVE_KQUEUE)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sys_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/sys_config.h)
+
 add_library(microloop SHARED
   src/event_loop.cpp
   src/signals_monitor.cpp
