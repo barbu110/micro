@@ -32,33 +32,12 @@ public:
     void close();
   };
 
-private:
   using ConnectionHandler = std::function<void(PeerConnection &)>;
   using DataHandler = std::function<void(PeerConnection &, const microloop::Buffer &)>;
 
 public:
-  TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data) :
-      port{port}, server_fd{0}, on_conn{std::move(on_conn)}, on_data{std::move(on_data)}
-  {
-    using namespace std::placeholders;
-    using microloop::EventLoop;
-    using microloop::event_sources::net::AwaitConnections;
-
-    server_fd = create_passive_socket(port);
-
-    auto connection_handler = std::bind(&TcpServer::handle_connection, this, _1, _2, _3);
-    EventLoop::get_main()->add_event_source(new AwaitConnections(server_fd, connection_handler));
-
-    microloop::EventLoop::get_main()->register_signal_handler(SIGINT, [&](std::uint32_t) {
-      destroy();
-      return true;
-    });
-  }
-
-  virtual ~TcpServer()
-  {
-    destroy();
-  }
+  TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data);
+  ~TcpServer();
 
 private:
   /**
