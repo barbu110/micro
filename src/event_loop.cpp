@@ -91,6 +91,11 @@ bool EventLoop::next_tick()
 
     auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
     event_source->run_callback();
+
+    if (event_source->produced_events() & EPOLLONESHOT)
+    {
+      delete event_source;
+    }
   }
 
   return true;
