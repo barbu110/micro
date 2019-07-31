@@ -23,6 +23,8 @@ void on_data(net::TcpServer::PeerConnection &conn, const microloop::Buffer &buf)
   }
 
   std::cout << "Received: " << static_cast<char *>(buf.data()) << "\n";
+
+  conn.send("goodbye.\n");
 }
 
 int main(int argc, char **argv)

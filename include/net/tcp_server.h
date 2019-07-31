@@ -30,6 +30,14 @@ public:
      * Close this connection.
      */
     void close();
+
+    /**
+     * Send a buffer to the peer socket of this connection.
+     * @param  buf The buffer to be sent to the peer socket.
+     * @return Whether the operation succeeded or not. If only a fractino of the entire buffer is
+     * sent, then the functino will report it as a failure.
+     */
+    bool send(const microloop::Buffer &);
   };
 
   using ConnectionHandler = std::function<void(PeerConnection &)>;

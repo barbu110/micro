@@ -25,6 +25,29 @@ void TcpServer::PeerConnection::close()
   server->peer_connections.erase(fd);
 }
 
+bool TcpServer::PeerConnection::send(const microloop::Buffer &buf)
+{
+  std::size_t total_sent = 0;
+
+  while (total_sent != buf.size())
+  {
+    const std::uint8_t *data = static_cast<const std::uint8_t *>(buf.data());
+    ssize_t nsent = ::send(fd, data + total_sent, buf.size() - total_sent, 0);
+    if (nsent == -1)
+    {
+      /*
+       * TODO Process the error correctly.
+       */
+
+      return false;
+    }
+
+    total_sent += nsent;
+  }
+
+  return true;
+}
+
 TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
 {
   using namespace std::placeholders;
