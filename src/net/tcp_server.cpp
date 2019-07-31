@@ -25,8 +25,7 @@ void TcpServer::PeerConnection::close()
   server->peer_connections.erase(fd);
 }
 
-TcpServer::TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data) :
-    port{port}, server_fd{0}, on_conn{std::move(on_conn)}, on_data{std::move(on_data)}
+TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
 {
   using namespace std::placeholders;
   using microloop::EventLoop;

@@ -36,8 +36,26 @@ public:
   using DataHandler = std::function<void(PeerConnection &, const microloop::Buffer &)>;
 
 public:
-  TcpServer(std::uint16_t port, ConnectionHandler &&on_conn, DataHandler &&on_data);
+  TcpServer(std::uint16_t port);
   ~TcpServer();
+
+  template <class Func, class... Args>
+  void set_connection_callback(Func &&func, Args &&... args)
+  {
+    using namespace std::placeholders;
+
+    auto bound = std::bind(std::forward<Func>(func), std::forward<Args>(args)..., _1);
+    on_conn = std::move(bound);
+  }
+
+  template <class Func, class... Args>
+  void set_data_callback(Func &&func, Args &&... args)
+  {
+    using namespace std::placeholders;
+
+    auto bound = std::bind(std::forward<Func>(func), std::forward<Args>(args)..., _1, _2);
+    on_data = std::move(bound);
+  }
 
 private:
   /**
