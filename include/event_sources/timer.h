@@ -1,23 +1,39 @@
-// Copyright 2019 Victor Barbu.
+//
+// Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
+//
 
 #pragma once
 
+#include "event_source.h"
+#include "kernel_exception.h"
+
 #include <errno.h>
-#include <event_source.h>
 #include <functional>
-#include <kernel_exception.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
 
 namespace microloop::event_sources
 {
 
+enum class TimerType
+{
+  /**
+   * The timer is set to expire only once, then destroy itself.
+   */
+  TIMEOUT,
+
+  /**
+   * The timer will expire at the specified interval.
+   */
+  INTERVAL,
+};
+
 template <class Callback>
-class Timeout : public microloop::EventSource
+class Timer : public microloop::EventSource
 {
 public:
-  Timeout(int timeout, Callback callback) :
-      microloop::EventSource{}, timeout{timeout}, callback{callback}
+  Timer(int value, TimerType type, Callback callback) :
+      microloop::EventSource{}, value{value}, type{type}, callback{callback}
   {
     int fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
     if (fd == -1)
@@ -27,23 +43,31 @@ public:
 
     set_fd(fd);
 
-    itimerspec timer_value{{0, 0}, {timeout / 1000, timeout % 1000 * 1000000}};
+    timespec t{value / 1000, value % 1000 * 1000000};
+    itimerspec timer_value{};
+    timer_value.it_value = t;
+
+    if (type == TimerType::INTERVAL)
+    {
+      timer_value.it_interval = t;
+    }
+
     if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1)
     {
       throw microloop::KernelException(errno);
     }
   }
 
-  virtual ~Timeout() override
+  ~Timer() override
   {
     close(get_fd());
   }
 
 protected:
-  virtual void start() override
+  void start() override
   {}
 
-  virtual void run_callback() override
+  void run_callback() override
   {
     std::uint64_t expirations_count = 0;
     ssize_t nread = read(get_fd(), &expirations_count, sizeof(std::uint64_t));
@@ -68,16 +92,31 @@ protected:
     callback();
   }
 
-  virtual std::uint32_t produced_events() const override
+  std::uint32_t produced_events() const override
   {
-    return EPOLLIN;
+    switch (type)
+    {
+    case TimerType::TIMEOUT:
+      return EPOLLIN | EPOLLONESHOT;
+    case TimerType::INTERVAL:
+      return EPOLLIN;
+    }
   }
 
 private:
-  // Timeout in milliseconds.
-  int timeout;
+  /**
+   * Timer value in milliseconds.
+   */
+  int value;
 
-  // The callable object to call when the timer finishes.
+  /**
+   * Type of the timer.
+   */
+  TimerType type;
+
+  /**
+   * Callback to call whenever the timer expires.
+   */
   Callback callback;
 };
 
