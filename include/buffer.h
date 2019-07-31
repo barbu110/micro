@@ -48,13 +48,6 @@ public:
     std::memcpy(buf, src, sz);
   }
 
-  /**
-   * Create a buffer from a C++ string.
-   * @param  src The C++ string to use as source.
-   */
-  explicit Buffer(const std::string &src) : Buffer{src.c_str(), src.length()}
-  {}
-
   ~Buffer()
   {
     free(buf);
