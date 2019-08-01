@@ -27,7 +27,8 @@ static void set_interval(int ms, microloop::EventLoop *event_loop, Callback on_e
   using microloop::event_sources::Timer;
   using microloop::event_sources::TimerType;
 
-  event_loop->add_event_source(new Timer<Callback>(ms, TimerType::INTERVAL, event_loop, on_expired));
+  event_loop->add_event_source(
+      new Timer<Callback>(ms, TimerType::INTERVAL, event_loop, on_expired));
 }
 
 }  // namespace microloop::timers

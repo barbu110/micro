@@ -10,8 +10,8 @@
 #include <errno.h>
 #include <functional>
 #include <sys/timerfd.h>
-#include <unistd.h>
 #include <type_traits>
+#include <unistd.h>
 
 namespace microloop::event_sources
 {
@@ -75,10 +75,7 @@ class Timer : public BaseTimer
 {
 public:
   Timer(int value, TimerType type, microloop::EventLoop *event_loop, Callback callback) :
-      microloop::EventSource{},
-      value{value},
-      type{type},
-      callback{callback},
+      microloop::EventSource{}, value{value}, type{type}, callback{callback},
       controller{this, microloop::EventLoop::get_main()}
   {
     static_assert(std::is_invocable_v<Callback, TimerController &>);
