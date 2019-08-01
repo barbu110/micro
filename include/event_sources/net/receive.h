@@ -24,7 +24,8 @@ public:
   Receive(std::uint32_t sock, Callback &&on_recv,
       std::uint32_t max_read_size = Receive::DEFAULT_MAX_READ_SIZE) :
       EventSource{sock},
-      on_recv{std::move(on_recv)}, max_read_size{max_read_size}
+      on_recv{std::move(on_recv)},
+      max_read_size{max_read_size}
   {}
 
   std::uint32_t produced_events() const override

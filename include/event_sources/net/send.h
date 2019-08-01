@@ -25,7 +25,10 @@ public:
   // The socket should be opened in nonblocking mode. We do not issue an fcntl to set
   // it that way because that would waste time.
   Send(std::uint32_t sock, const microloop::Buffer &buf, Types::Callback callback) :
-      microloop::EventSource{sock}, buf{buf}, callback{callback}, sent_total{0}
+      microloop::EventSource{sock},
+      buf{buf},
+      callback{callback},
+      sent_total{0}
   {}
 
   void start() override

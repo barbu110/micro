@@ -20,7 +20,8 @@ class AwaitConnections : public microloop::EventSource
 
 public:
   AwaitConnections(std::uint32_t sock, Types::Callback &&callback) :
-      EventSource{sock}, callback{std::move(callback)}
+      EventSource{sock},
+      callback{std::move(callback)}
   {}
 
   void start() override
