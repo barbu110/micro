@@ -28,6 +28,7 @@ AccessModifierOffset: -2
 AllowShortFunctionsOnASingleLine: None
 AllowShortBlocksOnASingleLine: true
 BreakConstructorInitializers: AfterColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ReflowComments: true
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: Yes
