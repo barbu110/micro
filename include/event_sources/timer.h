@@ -11,6 +11,7 @@
 #include <functional>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include <type_traits>
 
 namespace microloop::event_sources
 {
@@ -80,6 +81,8 @@ public:
       callback{callback},
       controller{this, microloop::EventLoop::get_main()}
   {
+    static_assert(std::is_invocable_v<Callback, TimerController &>);
+
     int fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
     if (fd == -1)
     {
@@ -139,6 +142,7 @@ protected:
     }
 
     expirations_count += value;
+
     callback(controller);
   }
 
