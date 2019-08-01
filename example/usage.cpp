@@ -42,13 +42,28 @@ int main(int argc, char **argv)
     throw std::range_error("invalid port");
   }
 
+  auto event_loop = microloop::EventLoop::get_main();
+
   auto tcp_server = microloop::net::TcpServer{static_cast<uint16_t>(port)};
   tcp_server.set_connection_callback(on_conn);
   tcp_server.set_data_callback(on_data);
 
-  microloop::timers::set_timeout(3000, []() { std::cout << "Timer is done.\n"; });
+  using microloop::event_sources::TimerController;
 
-  microloop::timers::set_interval(2000, []() { std::cout << "Interval is done.\n"; });
+  microloop::timers::set_timeout(3000, event_loop, [](TimerController &) {
+    std::cout << "Timer is done.\n";
+  });
+
+  std::uint32_t expirations_count = 0;
+  microloop::timers::set_interval(2000, event_loop, [&expirations_count](TimerController &timer) {
+    expirations_count++;
+    std::cout << "Interval is done.\n";
+
+    if (expirations_count == 4)
+    {
+      timer.cancel();
+    }
+  });
 
   while (true)
   {
