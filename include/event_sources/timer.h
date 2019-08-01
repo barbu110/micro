@@ -39,6 +39,12 @@ public:
    */
   virtual std::uint64_t get_expirations_count() const noexcept = 0;
 
+  /**
+   * Set a new value for the timer.
+   * @param chrono::nanoseconds The value to be set.
+   */
+  virtual void set_value(std::chrono::nanoseconds) = 0;
+
   virtual ~BaseTimer()
   {}
 };
@@ -48,7 +54,8 @@ class TimerController
 public:
   TimerController(BaseTimer *timer, microloop::EventLoop *event_loop) :
       timer{timer},
-      event_loop{event_loop}
+      event_loop{event_loop},
+      start_time{std::chrono::high_resolution_clock::now()}
   {}
 
   /**
@@ -61,16 +68,34 @@ public:
 
   /**
    * How many times the timer has expired so far.
-   * @return [description]
    */
   std::uint64_t get_expirations_count() const noexcept
   {
     return timer->get_expirations_count();
   }
 
+  /**
+   * How much time passed since the timer controller has been created.
+   */
+  std::chrono::high_resolution_clock::duration get_elapsed_time() const noexcept
+  {
+    auto curr_time = std::chrono::high_resolution_clock::now();
+    return curr_time - start_time;
+  }
+
+  /**
+   * Set a new value for the timer.
+   * @param chrono::nanoseconds The value to be set.
+   */
+  void set_value(std::chrono::nanoseconds value)
+  {
+    timer->set_value(value);
+  }
+
 private:
   BaseTimer *timer;
   microloop::EventLoop *event_loop;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
 };
 
 template <class Callback>
@@ -94,7 +119,28 @@ public:
     }
 
     set_fd(fd);
+    set_value(value);
+  }
 
+  ~Timer() override
+  {
+    close(get_fd());
+  }
+
+  /**
+   * How many times the timer has expired so far.
+   */
+  std::uint64_t get_expirations_count() const noexcept override
+  {
+    return expirations_count;
+  }
+
+  /**
+   * Set a new value for the timer.
+   * @param chrono::nanoseconds The value to be set.
+   */
+  void set_value(std::chrono::nanoseconds value) override
+  {
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(value);
     auto fraction_ns = value - seconds;
 
@@ -107,20 +153,12 @@ public:
       timer_value.it_interval = t;
     }
 
-    if (timerfd_settime(fd, 0, &timer_value, nullptr) == -1)
+    if (timerfd_settime(get_fd(), 0, &timer_value, nullptr) == -1)
     {
       throw microloop::KernelException(errno);
     }
-  }
 
-  ~Timer() override
-  {
-    close(get_fd());
-  }
-
-  std::uint64_t get_expirations_count() const noexcept override
-  {
-    return expirations_count;
+    this->value = value;
   }
 
 protected:
