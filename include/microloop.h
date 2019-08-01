@@ -4,19 +4,33 @@
 
 #pragma once
 
-#include <buffer.h>
-#include <event_loop.h>
-#include <event_sources/timeout.h>
+#include "buffer.h"
+#include "event_loop.h"
+#include "event_sources/timer.h"
+
 #include <string>
 
 namespace microloop::timers
 {
 
 template <typename Callback>
-static void set_timeout(int ms, Callback on_done)
+static void set_timeout(int ms, Callback on_expired)
 {
-  microloop::EventLoop::get_main()->add_event_source(
-      new microloop::event_sources::Timeout(ms, on_done));
+  using microloop::EventLoop;
+  using microloop::event_sources::Timer;
+  using microloop::event_sources::TimerType;
+
+  EventLoop::get_main()->add_event_source(new Timer(ms, TimerType::TIMEOUT, on_expired));
+}
+
+template <typename Callback>
+static void set_interval(int ms, Callback on_expired)
+{
+  using microloop::EventLoop;
+  using microloop::event_sources::Timer;
+  using microloop::event_sources::TimerType;
+
+  EventLoop::get_main()->add_event_source(new Timer(ms, TimerType::INTERVAL, on_expired));
 }
 
 }  // namespace microloop::timers
