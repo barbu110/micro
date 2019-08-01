@@ -88,11 +88,21 @@ bool EventLoop::next_tick()
   for (int i = 0; i < ready; i++)
   {
     auto &event = events_list[i];
-
     auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
+    auto delete_event_source = false;
+    if (event_source->produced_events() & EPOLLONESHOT)
+    {
+      delete_event_source = true;
+    }
+
+    /*
+     * The callback of an event source may remove it from the event loop leaving us with a dangling
+     * pointer here. Thus we need to perform the check of produced events before running the
+     * callback while we know for sure the address of the event source is still valid.
+     */
     event_source->run_callback();
 
-    if (event_source->produced_events() & EPOLLONESHOT)
+    if (delete_event_source)
     {
       delete event_source;
     }
