@@ -29,7 +29,16 @@ enum class TimerType
 };
 
 class BaseTimer : public virtual microloop::EventSource
-{};
+{
+public:
+  /**
+   * How many times the timer has expired so far.
+   */
+  virtual std::uint64_t get_expirations_count() const = 0;
+
+  virtual ~BaseTimer()
+  {}
+};
 
 class TimerController
 {
@@ -44,6 +53,15 @@ public:
   void cancel()
   {
     event_loop->remove_event_source(timer);
+  }
+
+  /**
+   * How many times the timer has expired so far.
+   * @return [description]
+   */
+  std::uint64_t get_expirations_count() const
+  {
+    return timer->get_expirations_count();
   }
 
 private:
@@ -90,14 +108,23 @@ public:
     close(get_fd());
   }
 
+  std::uint64_t get_expirations_count() const override
+  {
+    return expirations_count;
+  }
+
 protected:
   void start() override
   {}
 
   void run_callback() override
   {
-    std::uint64_t expirations_count = 0;
-    ssize_t nread = read(get_fd(), &expirations_count, sizeof(std::uint64_t));
+    /*
+     * How many times the timer has expired since the last read(). This will certainly be 1. We
+     * perform the read here to consume the event.
+     */
+    std::uint64_t value = 0;
+    ssize_t nread = read(get_fd(), &value, sizeof(std::uint64_t));
     if (nread == -1)
     {
       /*
@@ -111,11 +138,7 @@ protected:
       throw microloop::KernelException(errno);
     }
 
-    /*
-     * We only read the expirations count to consume the event on the timer as this value is of no
-     * importance.
-     */
-
+    expirations_count += value;
     callback(controller);
   }
 
@@ -145,6 +168,11 @@ private:
    * Callback to call whenever the timer expires.
    */
   Callback callback;
+
+  /**
+   * How many times the timer expired.
+   */
+  std::uint64_t expirations_count = 0;
 
   /**
    * The timer controller passed as parameter to the timer callback.
