@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "buffer.h"
 #include "event_loop.h"
 #include "event_sources/timer.h"
 
