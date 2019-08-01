@@ -53,9 +53,17 @@ int main(int argc, char **argv)
   using namespace std::literals::chrono_literals;
   microloop::timers::set_interval(6s, event_loop, [](TimerController &timer) {
     std::cout << "Interval is done.\n";
-    std::cout << "Timer expired this many times: " << timer.get_expirations_count() << "\n";
 
-    if (timer.get_expirations_count() == 4)
+    auto elapsed = timer.get_elapsed_time();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    std::cout << "Time elapsed: " << ms << "ms.\n";
+
+    if (timer.get_expirations_count() == 2)
+    {
+      timer.set_value(std::chrono::seconds{1});
+    }
+
+    if (timer.get_expirations_count() == 10)
     {
       timer.cancel();
     }
