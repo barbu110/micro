@@ -28,12 +28,39 @@ enum class TimerType
   INTERVAL,
 };
 
-template <class Callback>
-class Timer : public microloop::EventSource
+class BaseTimer : public virtual microloop::EventSource
+{};
+
+class TimerController
 {
 public:
-  Timer(int value, TimerType type, Callback callback) :
-      microloop::EventSource{}, value{value}, type{type}, callback{callback}
+  TimerController(BaseTimer *timer, microloop::EventLoop *event_loop) :
+      timer{timer}, event_loop{event_loop}
+  {}
+
+  /**
+   * Cancel the timer.
+   */
+  void cancel()
+  {
+    event_loop->remove_event_source(timer);
+  }
+
+private:
+  BaseTimer *timer;
+  microloop::EventLoop *event_loop;
+};
+
+template <class Callback>
+class Timer : public BaseTimer
+{
+public:
+  Timer(int value, TimerType type, microloop::EventLoop *event_loop, Callback callback) :
+      microloop::EventSource{},
+      value{value},
+      type{type},
+      callback{callback},
+      controller{this, microloop::EventLoop::get_main()}
   {
     int fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
     if (fd == -1)
@@ -89,7 +116,7 @@ protected:
      * importance.
      */
 
-    callback();
+    callback(controller);
   }
 
   std::uint32_t produced_events() const override
@@ -118,6 +145,11 @@ private:
    * Callback to call whenever the timer expires.
    */
   Callback callback;
+
+  /**
+   * The timer controller passed as parameter to the timer callback.
+   */
+  TimerController controller;
 };
 
 }  // namespace microloop::event_sources
