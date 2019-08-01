@@ -35,7 +35,7 @@ public:
   /**
    * How many times the timer has expired so far.
    */
-  virtual std::uint64_t get_expirations_count() const = 0;
+  virtual std::uint64_t get_expirations_count() const noexcept = 0;
 
   virtual ~BaseTimer()
   {}
@@ -60,7 +60,7 @@ public:
    * How many times the timer has expired so far.
    * @return [description]
    */
-  std::uint64_t get_expirations_count() const
+  std::uint64_t get_expirations_count() const noexcept
   {
     return timer->get_expirations_count();
   }
@@ -111,7 +111,7 @@ public:
     close(get_fd());
   }
 
-  std::uint64_t get_expirations_count() const override
+  std::uint64_t get_expirations_count() const noexcept override
   {
     return expirations_count;
   }
