@@ -50,10 +50,8 @@ int main(int argc, char **argv)
 
   using microloop::event_sources::TimerController;
 
-  microloop::timers::set_timeout(
-      2000, event_loop, [](TimerController &) { std::cout << "Timer is done.\n"; });
-
-  microloop::timers::set_interval(600, event_loop, [](TimerController &timer) {
+  using namespace std::literals::chrono_literals;
+  microloop::timers::set_interval(6s, event_loop, [](TimerController &timer) {
     std::cout << "Interval is done.\n";
     std::cout << "Timer expired this many times: " << timer.get_expirations_count() << "\n";
 

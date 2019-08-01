@@ -7,8 +7,10 @@
 #include "event_source.h"
 #include "kernel_exception.h"
 
+#include <chrono>
 #include <errno.h>
 #include <functional>
+#include <ratio>
 #include <sys/timerfd.h>
 #include <type_traits>
 #include <unistd.h>
@@ -45,7 +47,8 @@ class TimerController
 {
 public:
   TimerController(BaseTimer *timer, microloop::EventLoop *event_loop) :
-      timer{timer}, event_loop{event_loop}
+      timer{timer},
+      event_loop{event_loop}
   {}
 
   /**
@@ -74,8 +77,12 @@ template <class Callback>
 class Timer : public BaseTimer
 {
 public:
-  Timer(int value, TimerType type, microloop::EventLoop *event_loop, Callback callback) :
-      microloop::EventSource{}, value{value}, type{type}, callback{callback},
+  Timer(std::chrono::nanoseconds value, TimerType type, microloop::EventLoop *event_loop,
+      Callback callback) :
+      microloop::EventSource{},
+      value{value},
+      type{type},
+      callback{callback},
       controller{this, microloop::EventLoop::get_main()}
   {
     static_assert(std::is_invocable_v<Callback, TimerController &>);
@@ -88,7 +95,10 @@ public:
 
     set_fd(fd);
 
-    timespec t{value / 1000, value % 1000 * 1000000};
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(value);
+    auto fraction_ns = value - seconds;
+
+    timespec t{seconds.count(), fraction_ns.count()};
     itimerspec timer_value{};
     timer_value.it_value = t;
 
@@ -158,7 +168,7 @@ private:
   /**
    * Timer value in milliseconds.
    */
-  int value;
+  std::chrono::nanoseconds value;
 
   /**
    * Type of the timer.
