@@ -58,6 +58,7 @@ After creating the TCP server as described above and building the
 source code, we can test it using a simple utility like `ncat`:
 
 ```bash
-$ printf "hello" | ncat 127.0.0.1 <port>
+$ ./microloop-usage 5000 > /dev/null &
+$ printf "hello" | ncat 127.0.0.1 5000
 goodbye.
 ```
