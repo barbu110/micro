@@ -19,10 +19,13 @@ add_library(microloop SHARED
   src/utils/thread_pool.cpp
   src/net/tcp_server.cpp)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
+target_include_directories(microloop PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/microloop)
 target_link_libraries(microloop pthread)
 
-add_executable(microloop-usage
-        example/usage.cpp)
-target_link_libraries(microloop-usage microloop)
+option(BUILD_EXAMPLE "Build the usage example" OFF)
+if (BUILD_EXAMPLE)
+  add_executable(microloop-usage example/usage.cpp)
+  target_link_libraries(microloop-usage microloop)
+  target_include_directories(microloop PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/microloop)
+endif()
+
