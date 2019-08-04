@@ -6,6 +6,5 @@ cc_library(
   includes = [
     "include",
   ],
-  include_prefix = "microloop",
-  visibility = ["//apps/buffer:__pkg__"],
+  visibility = ["//visibility:public"],
 )

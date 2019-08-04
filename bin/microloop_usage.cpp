@@ -43,8 +43,6 @@ int main(int argc, char **argv)
     throw std::range_error("invalid port");
   }
 
-  auto event_loop = microloop::EventLoop::get_main();
-
   auto tcp_server = microloop::net::TcpServer{static_cast<uint16_t>(port)};
   tcp_server.set_connection_callback(on_conn);
   tcp_server.set_data_callback(on_data);
