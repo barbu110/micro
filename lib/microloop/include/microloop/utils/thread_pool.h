@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "kernel_exception.h"
+#include "microloop/kernel_exception.h"
 
 #include <atomic>
 #include <condition_variable>

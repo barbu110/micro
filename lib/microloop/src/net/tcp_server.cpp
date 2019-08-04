@@ -2,9 +2,9 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "net/tcp_server.h"
+#include "microloop/net/tcp_server.h"
 
-#include "utils/error.h"
+#include "microloop/utils/error.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -76,7 +76,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
 
   addrinfo *results;
   addrinfo hints{
-      .ai_socktype = SOCK_STREAM, .ai_family = AF_UNSPEC, .ai_flags = AI_PASSIVE | AI_NUMERICSERV};
+      .ai_flags = AI_PASSIVE | AI_NUMERICSERV, .ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
 
   auto err_code = getaddrinfo(nullptr, port_str.c_str(), &hints, &results);
   if (err_code != 0)
@@ -87,12 +87,12 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
     throw std::runtime_error(err.str());
   }
 
-  std::uint32_t fd;
+  std::int32_t fd;
   auto r = results;
   for (; r != nullptr; r = r->ai_next)
   {
     fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-    if (fd == -1)
+    if (fd < -1)
     {
       continue;
     }
@@ -133,7 +133,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
     throw microloop::KernelException(errno);
   }
 
-  return fd;
+  return static_cast<std::uint32_t>(fd);
 }
 
 void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, socklen_t addrlen)

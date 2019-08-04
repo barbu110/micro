@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "event_source.h"
+#include "microloop/event_source.h"
 
 #include <cstdint>
 #include <functional>

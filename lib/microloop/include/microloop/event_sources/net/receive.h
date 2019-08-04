@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include "microloop/buffer.h"
+#include "microloop/event_source.h"
+#include "microloop/kernel_exception.h"
+
 #include <atomic>
-#include <buffer.h>
 #include <cstdint>
 #include <errno.h>
-#include <event_source.h>
-#include <kernel_exception.h>
 #include <sys/socket.h>
 
 namespace microloop::event_sources::net

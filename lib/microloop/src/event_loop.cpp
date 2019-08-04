@@ -1,9 +1,10 @@
 // Copyright 2019 Victor Barbu
 
-#include "event_loop.h"
+#include "microloop/event_loop.h"
+
+#include "microloop/kernel_exception.h"
 
 #include <errno.h>
-#include <kernel_exception.h>
 #include <sys/epoll.h>
 
 namespace microloop
@@ -13,11 +14,13 @@ EventLoop *EventLoop::main_instance = nullptr;
 
 EventLoop::EventLoop() : thread_pool{4}
 {
-  epollfd = epoll_create(1);
-  if (epollfd == -1)
+  std::int32_t fd = epoll_create(1);
+  if (fd == -1)
   {
     throw KernelException(errno);
   }
+
+  epollfd = epoll_create(1);
 
   add_event_source(&signals_monitor);
 }

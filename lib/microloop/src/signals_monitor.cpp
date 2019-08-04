@@ -2,9 +2,9 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "signals_monitor.h"
+#include "microloop/signals_monitor.h"
 
-#include "kernel_exception.h"
+#include "microloop/kernel_exception.h"
 
 #include <signal.h>
 #include <sys/signalfd.h>

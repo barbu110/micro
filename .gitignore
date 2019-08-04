@@ -1,7 +1,5 @@
 .idea
 compile_commands.json
 build
-.ccls-cache
-cmake-build-debug
-a.out
-include/sys_config.h
+bazel-*
+

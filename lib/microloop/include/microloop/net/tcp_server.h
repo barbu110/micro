@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "microloop/event_loop.h"
+#include "microloop/event_sources/net/await_connections.h"
+#include "microloop/event_sources/net/receive.h"
+
 #include <cstdint>
-#include <event_loop.h>
-#include <event_sources/net/await_connections.h>
-#include <event_sources/net/receive.h>
 #include <functional>
 #include <map>
 #include <signal.h>

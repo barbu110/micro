@@ -1,7 +1,8 @@
-// Copyright 2019 Victor Barbu
+//
+// Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
+//
 
-#include "microloop.h"
-#include "net/tcp_server.h"
+#include "microloop/net/tcp_server.h"
 
 #include <iostream>
 #include <limits>
@@ -47,27 +48,6 @@ int main(int argc, char **argv)
   auto tcp_server = microloop::net::TcpServer{static_cast<uint16_t>(port)};
   tcp_server.set_connection_callback(on_conn);
   tcp_server.set_data_callback(on_data);
-
-  using microloop::event_sources::TimerController;
-
-  using namespace std::literals::chrono_literals;
-  microloop::timers::set_interval(6s, event_loop, [](TimerController &timer) {
-    std::cout << "Interval is done.\n";
-
-    auto elapsed = timer.get_elapsed_time();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    std::cout << "Time elapsed: " << ms << "ms.\n";
-
-    if (timer.get_expirations_count() == 2)
-    {
-      timer.set_value(std::chrono::seconds{1});
-    }
-
-    if (timer.get_expirations_count() == 10)
-    {
-      timer.cancel();
-    }
-  });
 
   while (true)
   {
