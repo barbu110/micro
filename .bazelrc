@@ -1,1 +1,1 @@
-# build --crosstool_top=//tools/cpp:modern_cpp
+build --copt '-std=c++17'
