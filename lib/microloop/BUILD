@@ -1,5 +1,5 @@
 cc_library(
-  name = "main",
+  name = "microloop",
   srcs = glob(["src/**/*.cpp", "include/**/*.h"]),
   hdrs = glob(["include/**/*.h"]),
   linkopts = ["-pthread"],

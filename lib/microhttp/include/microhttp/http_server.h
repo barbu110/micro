@@ -7,6 +7,7 @@
 #include "microhttp/http_request.h"
 #include "microloop/buffer.h"
 #include "microloop/net/tcp_server.h"
+#include "microhttp/response_writer.h"
 
 #include <cstdint>
 #include <functional>
@@ -25,7 +26,7 @@ class HttpServer
 {
   struct Client
   {
-    PeerConnection &peer_connection;
+    microloop::net::TcpServer::PeerConnection &peer_connection;
     microloop::Buffer received_data;
 
     /**
@@ -88,7 +89,7 @@ private:
   /**
    * The underlying TCP server to use.
    */
-  microloop::TcpServer tcp_server;
+  microloop::net::TcpServer tcp_server;
 
   /**
    * Various parameters of the HTTP server.

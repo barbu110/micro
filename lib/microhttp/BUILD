@@ -1,5 +1,5 @@
 cc_library(
-  name = "main",
+  name = "microhttp",
   srcs = glob(["src/**/*.cpp"]),
   hdrs = glob(["include/**/*.h"]),
   includes = [
@@ -7,7 +7,7 @@ cc_library(
   ],
   visibility = ["//visibility:public"],
   deps = [
-    "//lib/microloop:main",
+    "//lib/microloop:microloop",
   ],
 )
 
@@ -17,6 +17,6 @@ cc_test(
   deps = [
     "@gtest//:gtest",
     "@gtest//:gtest_main",
-    ":main",
+    ":microhttp",
   ],
 )
