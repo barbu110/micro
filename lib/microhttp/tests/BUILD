@@ -20,4 +20,15 @@ cc_test(
   ],
 )
 
+cc_test(
+  name = "version",
+  timeout = "short",
+  srcs = ["version_test.cpp"],
+  deps = [
+    "@gtest//:gtest",
+    "@gtest//:gtest_main",
+    "//lib/microhttp:microhttp",
+  ],
+)
+
 test_suite(name = "full")
