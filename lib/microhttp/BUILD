@@ -10,13 +10,3 @@ cc_library(
     "//lib/microloop:microloop",
   ],
 )
-
-cc_test(
-  name = "http_request_test",
-  srcs = ["tests/http_request_test.cpp"],
-  deps = [
-    "@gtest//:gtest",
-    "@gtest//:gtest_main",
-    ":microhttp",
-  ],
-)
