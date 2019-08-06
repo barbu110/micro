@@ -26,7 +26,7 @@ class HttpServer
 {
   struct Client
   {
-    microloop::net::TcpServer::PeerConnection &peer_connection;
+    microloop::net::TcpServer::PeerConnection *peer_connection;
     microloop::Buffer received_data;
 
     /**
@@ -83,7 +83,7 @@ private:
    * @param conn The remote TCP connection
    * @param buf The received data buffer
    */
-  void on_tcp_data(microhttp::net::TcpServer::PeerConnection &, const microloop::Buffer &);
+  void on_tcp_data(microloop::net::TcpServer::PeerConnection &, const microloop::Buffer &);
 
 private:
   /**

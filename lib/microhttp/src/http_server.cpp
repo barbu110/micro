@@ -9,7 +9,7 @@ namespace microhttp::http
 
 void HttpServer::Client::drop(ResponseWriter &)
 {
-  peer_connection.close();
+  peer_connection->close();
 }
 
 HttpServer::HttpServer(std::uint16_t port) : tcp_server{port}, config{create_default_config(port)}
@@ -27,13 +27,13 @@ HttpServerConfig HttpServer::create_default_config(std::uint16_t port)
 
 void HttpServer::on_tcp_conn(microloop::net::TcpServer::PeerConnection &conn)
 {
-  clients.emplace(conn.fd, Client{.peer_connection = conn});
+  clients.emplace(conn.fd, Client{.peer_connection = &conn});
 }
 
 void HttpServer::on_tcp_data(
-    microhttp::net::TcpServer::PeerConnection &conn, const microloop::Buffer &buf)
+    microloop::net::TcpServer::PeerConnection &conn, const microloop::Buffer &buf)
 {
-  Client &client = clients[conn.fd];
+  Client &client __attribute__((unused)) = clients[conn.fd];
 }
 
 }  // namespace microhttp::http
