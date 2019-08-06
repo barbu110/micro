@@ -8,3 +8,16 @@ cc_test(
     "//lib/microhttp:microhttp",
   ],
 )
+
+cc_test(
+  name = "request_parser",
+  timeout = "short",
+  srcs = ["request_parser_test.cpp"],
+  deps = [
+    "@gtest//:gtest",
+    "@gtest//:gtest_main",
+    "//lib/microhttp:microhttp",
+  ],
+)
+
+test_suite(name = "full")

@@ -8,5 +8,9 @@ cc_library(
   visibility = ["//visibility:public"],
   deps = [
     "//lib/microloop:microloop",
+    "@gtest//:gtest_prod",
+  ],
+  defines = [
+    "BUILD_TESTS", # Use select() function for defines.
   ],
 )

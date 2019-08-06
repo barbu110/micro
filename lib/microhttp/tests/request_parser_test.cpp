@@ -2,11 +2,11 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#pragma once
+#include "gtest/gtest.h"
 
-#include "http/http_request.h"
-#include "http/request_parser.h"
-#include "http/version.h"
+#include "microhttp/http_request.h"
+#include "microhttp/request_parser.h"
+#include "microhttp/version.h"
 
 #include <string>
 #include <vector>
