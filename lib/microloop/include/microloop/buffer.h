@@ -84,7 +84,7 @@ public:
   }
 
   /**
-   * Get the buffer data as an std::string. Note that this will work well for buffers that are 
+   * Get the buffer data as an std::string. Note that this will work well for buffers that are
    * suitable to be read as strings, but not for binary information, such as structures.
    */
   std::string str() const

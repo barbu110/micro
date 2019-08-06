@@ -1,0 +1,20 @@
+dist: bionic
+sudo: require
+language: cpp
+compiler: clang
+addons:
+  snaps:
+    - name: cmake
+      confinement: classic
+      channel: 3.14/stable
+  apt:
+    update: true
+    packages:
+      - make
+      - libgtest-dev
+script:
+  - clang --version
+  - /snap/bin/cmake --version
+  - /snap/bin/cmake -S . -B build
+  - /snap/bin/cmake --build build
+  - ./microhttp_tests
