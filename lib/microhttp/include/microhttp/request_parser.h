@@ -21,6 +21,7 @@ class RequestParser
 #ifdef BUILD_TESTS
   FRIEND_TEST(RequestParser, ParseStartLine);
   FRIEND_TEST(RequestParser, ParseHeaderLine);
+  FRIEND_TEST(RequestParser, AddChunk);
 #endif
 
   enum ExpectedLine

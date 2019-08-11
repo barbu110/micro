@@ -7,6 +7,7 @@
 #include "microhttp/http_request.h"
 #include "microhttp/request_parser.h"
 #include "microhttp/version.h"
+#include "microloop/buffer.h"
 
 #include <string>
 #include <vector>
@@ -28,6 +29,7 @@ struct HeaderInfo
   std::string field_name;
   std::string field_value;
 };
+
 
 TEST(RequestParser, ParseStartLine)
 {
@@ -96,6 +98,17 @@ TEST(RequestParser, ParseHeaderLine)
     HttpRequest req;
     ASSERT_FALSE(RequestParser::parse_header_line(c, req));
   }
+}
+
+TEST(RequestParser, AddChunkValid)
+{
+  RequestParser parser;
+
+  ASSERT_EQ(parser.expected_line_type, RequestParser::START_LINE);
+
+  parser.add_chunk("GET http://www.example.com HTTP/1.1\r\n");
+
+
 }
 
 }  // namespace microhttp::http
