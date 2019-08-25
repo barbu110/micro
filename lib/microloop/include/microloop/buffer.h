@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <string_view>
 
 namespace microloop
 {
@@ -75,6 +76,18 @@ public:
     return *this;
   }
 
+  void concat(const Buffer &other, std::size_t count) noexcept
+  {
+    auto curr_size = size();
+    resize(size() + count);
+    std::memcpy(buf + curr_size, other.data(), count);
+  }
+
+  void concat(const Buffer &other) noexcept
+  {
+    concat(other, other.size());
+  }
+
   /**
    * Retrieve the raw data held within the buffer
    */
@@ -91,6 +104,15 @@ public:
   {
     const std::string::value_type *s = reinterpret_cast<std::string::value_type *>(buf);
     return std::string{s, size()};
+  }
+
+  /**
+   * Get an std::string_view from this buffer.
+   */
+  std::string_view str_view() const
+  {
+    const std::string_view::value_type *s = reinterpret_cast<std::string_view::value_type *>(buf);
+    return std::string_view{s, size()};
   }
 
   /**
