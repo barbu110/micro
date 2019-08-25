@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <map>
 #include <string>
+#include <cstdlib>
+#include <cstdint>
 
 namespace microhttp::http
 {
@@ -106,9 +108,26 @@ public:
     return body;
   }
 
+  microloop::Buffer &get_body() noexcept
+  {
+    return body;
+  }
+
   std::string get_body_string() const noexcept
   {
     return body.str();
+  }
+
+  std::pair<std::size_t, bool> get_content_length() const noexcept
+  {
+    auto [content_length, found] = get_header("Content-Length");
+
+    if (!found)
+    {
+      return std::make_pair(0, false);
+    }
+
+    return std::make_pair(std::atoll(content_length.c_str()), true);
   }
 
 private:
