@@ -7,6 +7,7 @@
 #include "microhttp/version.h"
 
 #include <algorithm>
+#include <string_view>
 
 namespace microhttp::http
 {
@@ -14,9 +15,7 @@ namespace microhttp::http
 const std::size_t RequestParser::MAX_REQUEST_LINE_LEN = 2048;
 
 RequestParser::RequestParser() : status{Status::NO_DATA}, expected_line_type{START_LINE}
-{
-  curr_line.reserve(MAX_REQUEST_LINE_LEN);
-}
+{}
 
 void RequestParser::add_chunk(const microloop::Buffer &buf)
 {
@@ -25,26 +24,34 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
     return;
   }
 
-  auto str = buf.str();
+  request_buffer.concat(buf);
 
-  for (std::size_t i = 0; i != std::min(buf.size(), MAX_REQUEST_LINE_LEN) - 1; ++i)
+  auto sv = request_buffer.str_view();
+  std::size_t crlf_pos = 0;
+
+  while ((crlf_pos = sv.find("\r\n", 0)) != std::string_view::npos)
   {
-    if (str[i] == '\r' && str[i + 1] == '\n')
-    {
-      curr_line += "\r\n";
-      parse_line();
-
-      if (status != OK)
-      {
-        return;
-      }
-    }
-
-    curr_line.push_back(str[i]);
+    parse_line(sv.substr(0, crlf_pos + 2));
+    sv.remove_prefix(crlf_pos + 2);
   }
 }
 
-bool RequestParser::parse_start_line(const std::string &str, HttpRequest &req)
+RequestParser::Status RequestParser::get_status() const
+{
+  return status;
+}
+
+const HttpRequest &RequestParser::get_parsed_request() const
+{
+  return request;
+}
+
+HttpRequest &RequestParser::get_parsed_request()
+{
+  return request;
+}
+
+bool RequestParser::parse_start_line(std::string_view str, HttpRequest &req)
 {
   if (str.size() < 2 || str[str.size() - 2] != '\r' || str[str.size() - 1] != '\n')
   {
@@ -63,7 +70,7 @@ bool RequestParser::parse_start_line(const std::string &str, HttpRequest &req)
     return false;
   }
 
-  req.set_http_method(str.substr(0, method_end_idx));
+  req.set_http_method(std::string{str.substr(0, method_end_idx)});
 
   std::size_t uri_end_idx = str.find_first_of(' ', method_end_idx + 1);
   if (uri_end_idx == std::string::npos)
@@ -77,10 +84,9 @@ bool RequestParser::parse_start_line(const std::string &str, HttpRequest &req)
     return false;
   }
 
-  req.set_uri(uri);
+  req.set_uri(std::string{uri});
 
-
-  if (!req.set_http_version(str.substr(uri_end_idx + 1, Version::STRING_LEN)))
+  if (!req.set_http_version(std::string{str.substr(uri_end_idx + 1, Version::STRING_LEN)}))
   {
     /*
      * version string is invalid
@@ -91,7 +97,7 @@ bool RequestParser::parse_start_line(const std::string &str, HttpRequest &req)
   return true;
 }
 
-bool RequestParser::parse_header_line(const std::string &str, HttpRequest &req)
+bool RequestParser::parse_header_line(std::string_view str, HttpRequest &req)
 {
   if (str.size() < 2 || str[str.size() - 2] != '\r' || str[str.size() - 1] != '\n')
   {
@@ -102,7 +108,7 @@ bool RequestParser::parse_header_line(const std::string &str, HttpRequest &req)
   }
 
   auto colon_idx = str.find(':');
-  if (colon_idx == std::string::npos)
+  if (colon_idx == std::string_view::npos)
   {
     /*
      * we do not have a field name/value separator
@@ -111,7 +117,7 @@ bool RequestParser::parse_header_line(const std::string &str, HttpRequest &req)
   }
 
   auto space_idx = str.find(' ');
-  if (space_idx != std::string::npos && space_idx < colon_idx)
+  if (space_idx != std::string_view::npos && space_idx < colon_idx)
   {
     /*
      * whitespace not allowed before the colon
@@ -120,21 +126,21 @@ bool RequestParser::parse_header_line(const std::string &str, HttpRequest &req)
   }
 
   auto i = str.find_first_not_of(" \t", colon_idx + 1); /* start index of the field value */
-  auto j = str.size() - 1;                            /* the end index of the field value */
+  auto j = str.size() - 1;                              /* the end index of the field value */
   while (str[j] == '\r' || str[j] == '\n' || str[j] == ' ' || str[j] == '\t')
   {
     j--;
   }
 
-  auto field_name = str.substr(0, colon_idx);
-  auto field_value = str.substr(i, j - i + 1);
+  auto field_name = std::string{str.substr(0, colon_idx)};
+  auto field_value = std::string{str.substr(i, j - i + 1)};
 
   req.set_header(field_name, field_value);
 
   return true;
 }
 
-void RequestParser::parse_line()
+void RequestParser::parse_line(std::string_view curr_line)
 {
   switch (expected_line_type)
   {
@@ -146,6 +152,7 @@ void RequestParser::parse_line()
     else
     {
       expected_line_type = HEADER;
+      status = NO_HEADERS;
     }
     break;
 
@@ -157,6 +164,7 @@ void RequestParser::parse_line()
     else
     {
       expected_line_type = HEADER_OR_CRLF;
+      status = OK;
     }
     break;
 
@@ -164,6 +172,7 @@ void RequestParser::parse_line()
     if (curr_line == "\r\n")
     {
       expected_line_type = BODY;
+      status = OK;
     }
     else if (!parse_header_line(curr_line, request))
     {
@@ -175,9 +184,9 @@ void RequestParser::parse_line()
      * TODO append to the request bdoy buffer
      */
     break;
+  case END:
+    break;
   }
-
-  curr_line.clear();
 }
 
 }  // namespace microhttp::http

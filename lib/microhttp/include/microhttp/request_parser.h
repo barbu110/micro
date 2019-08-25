@@ -21,11 +21,12 @@ class RequestParser
 #ifdef BUILD_TESTS
   FRIEND_TEST(RequestParser, ParseStartLine);
   FRIEND_TEST(RequestParser, ParseHeaderLine);
-  FRIEND_TEST(RequestParser, AddChunk);
+  FRIEND_TEST(RequestParser, AddChunkValid);
 #endif
 
   enum ExpectedLine
   {
+    END,
     START_LINE,
     HEADER,
     HEADER_OR_CRLF,
@@ -38,9 +39,12 @@ public:
   enum Status
   {
     NO_DATA,
+    NO_HEADERS,
     OK,
     INVALID_START_LINE,
     INVALID_HEADER_LINE,
+    INVALID_CONTENT_LENGTH,
+    FINISHED,
   };
 
   RequestParser();
@@ -60,16 +64,21 @@ public:
   /**
    * Retrieve the HTTP request as parsed so far.
    */
-  HttpRequest get_parsed_request() const;
+  HttpRequest &get_parsed_request();
+
+  /**
+   * Retrieve the HTTP request as parsed so far.
+   */
+  const HttpRequest &get_parsed_request() const;
 
 private:
   /**
    * Parse the current line according to its expected type.
    */
-  void parse_line();
+  void parse_line(std::string_view sv);
 
-  static bool parse_start_line(const std::string &str, HttpRequest &req);
-  static bool parse_header_line(const std::string &str, HttpRequest &req);
+  static bool parse_start_line(std::string_view sv, HttpRequest &req);
+  static bool parse_header_line(std::string_view sv, HttpRequest &req);
 
 private:
   /**
@@ -80,17 +89,12 @@ private:
   /**
    * The buffer to be consumed and parsed.
    */
-  microloop::Buffer buffer;
+  microloop::Buffer request_buffer;
 
   /**
    * The current status of the parser. If an error-indicating stastus is set, parsing should stop.
    */
   Status status;
-
-  /**
-   * The current line to be parsed INCLUDING the CRLF token at the end.
-   */
-  std::string curr_line;
 
   /**
    * The expected type of the current line to be parsed. If parsing will fail according to this

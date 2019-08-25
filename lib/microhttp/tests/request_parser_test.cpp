@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace microhttp::http
 {
@@ -29,7 +30,6 @@ struct HeaderInfo
   std::string field_name;
   std::string field_value;
 };
-
 
 TEST(RequestParser, ParseStartLine)
 {
@@ -103,12 +103,41 @@ TEST(RequestParser, ParseHeaderLine)
 TEST(RequestParser, AddChunkValid)
 {
   RequestParser parser;
+  const auto &request = parser.get_parsed_request();
 
   ASSERT_EQ(parser.expected_line_type, RequestParser::START_LINE);
 
-  parser.add_chunk("GET http://www.example.com HTTP/1.1\r\n");
+  parser.add_chunk("POST http://www.example.com HTTP/1.1\r\n");
 
+  ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER);
+  ASSERT_EQ(parser.get_status(), RequestParser::NO_HEADERS);
 
+  Version expected_version{1, 1};
+  ASSERT_EQ(request.get_http_method(), "post");
+  ASSERT_EQ(request.get_http_version(), expected_version);
+  ASSERT_EQ(request.get_uri(), "http://www.example.com");
+
+  parser.add_chunk("Content-Length: 7\r\n");
+
+  ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER_OR_CRLF);
+  ASSERT_EQ(parser.get_status(), RequestParser::OK);
+
+  ASSERT_EQ(request.get_headers().size(), 1);
+
+  auto [content_length, header_found] = request.get_header("Content-Length");
+  ASSERT_TRUE(header_found);
+  ASSERT_EQ(content_length, "7");
+
+  parser.add_chunk("\r\n");
+
+  ASSERT_EQ(parser.expected_line_type, RequestParser::BODY);
+  ASSERT_EQ(parser.get_status(), RequestParser::OK);
+
+  parser.add_chunk("example");
+
+  ASSERT_EQ(request.get_body_string(), "example");
+  ASSERT_EQ(parser.get_status(), RequestParser::FINISHED);
+  ASSERT_EQ(parser.expected_line_type, RequestParser::END);
 }
 
 }  // namespace microhttp::http
