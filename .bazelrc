@@ -1,1 +1,2 @@
 build --copt '-std=c++17'
+test --copt '-std=c++17' --define BUILD_TESTS=1
