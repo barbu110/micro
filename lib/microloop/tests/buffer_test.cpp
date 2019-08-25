@@ -69,8 +69,10 @@ TEST(Buffer, ConcatsCorrectlyWithoutSize)
 
   a.concat(b);
 
-  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b) + 2); /* 2 is the number of NUL
-                                                                       characters */
+  /*
+   * 2 is the number of NULL-characters.
+   */
+  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b) + 2);
 
   const char *actual = static_cast<const char *>(a.data());
   for (std::size_t i = 0; i < std::size(expected_result); i++)
