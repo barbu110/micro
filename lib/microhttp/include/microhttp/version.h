@@ -31,4 +31,6 @@ struct Version
   std::uint8_t minor;
 };
 
+bool operator==(const Version &, const Version &);
+
 }  // namespace microhttp::http

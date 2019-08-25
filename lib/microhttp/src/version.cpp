@@ -47,4 +47,9 @@ Version::operator std::string() const
   return ss.str();
 }
 
+bool operator==(const Version &a, const Version &b)
+{
+  return a.major == b.major && a.minor == b.minor;
+}
+
 }  // namespace microhttp::http
