@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <string_view>
+#include <iostream>
 
 namespace microhttp::http
 {
@@ -19,8 +20,31 @@ RequestParser::RequestParser() : status{Status::NO_DATA}, expected_line_type{STA
 
 void RequestParser::add_chunk(const microloop::Buffer &buf)
 {
-  if (buf.empty())
+  if (buf.empty() || status == FINISHED)
   {
+    return;
+  }
+
+  if (expected_line_type == BODY)
+  {
+    auto [content_length, found] = request.get_content_length();
+    if (!found)
+    {
+      /*
+       * TODO Handle this situation.
+       */
+      return;
+    }
+
+    auto &body = request.get_body();
+    body.concat(buf, content_length - body.size());
+
+    if (body.size() == content_length)
+    {
+      status = FINISHED;
+      expected_line_type = END;
+    }
+
     return;
   }
 

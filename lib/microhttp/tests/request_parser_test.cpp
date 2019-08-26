@@ -100,6 +100,8 @@ TEST(RequestParser, ParseHeaderLine)
   }
 }
 
+#define BUFFER_FROM_STR_WITHOUT_NULL(str) (microloop::Buffer{str, std::strlen(str)})
+
 TEST(RequestParser, AddChunkValid)
 {
   RequestParser parser;
@@ -107,7 +109,7 @@ TEST(RequestParser, AddChunkValid)
 
   ASSERT_EQ(parser.expected_line_type, RequestParser::START_LINE);
 
-  parser.add_chunk("POST http://www.example.com HTTP/1.1\r\n");
+  parser.add_chunk(BUFFER_FROM_STR_WITHOUT_NULL("POST http://www.example.com HTTP/1.1\r\n"));
 
   ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER);
   ASSERT_EQ(parser.get_status(), RequestParser::NO_HEADERS);
@@ -117,7 +119,7 @@ TEST(RequestParser, AddChunkValid)
   ASSERT_EQ(request.get_http_version(), expected_version);
   ASSERT_EQ(request.get_uri(), "http://www.example.com");
 
-  parser.add_chunk("Content-Length: 7\r\n");
+  parser.add_chunk(BUFFER_FROM_STR_WITHOUT_NULL("Content-Length: 7\r\n"));
 
   ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER_OR_CRLF);
   ASSERT_EQ(parser.get_status(), RequestParser::OK);
