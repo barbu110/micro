@@ -170,6 +170,8 @@ public:
     swap(lhs.sz, rhs.sz);
     swap(lhs.buf, rhs.buf);
   }
+
+  bool operator==(const Buffer &other) const noexcept;
 };
 
 }  // namespace microloop

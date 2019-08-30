@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <tuple>
 
 namespace microloop
 {
@@ -109,6 +110,23 @@ TEST(Buffer, ConcatsCorrectlyWithSize)
   for (std::size_t i = 0; i < std::size(expected_result); i++)
   {
     ASSERT_EQ(actual[i], expected_result[i]);
+  }
+}
+
+TEST(Buffer, Comparison)
+{
+  std::vector<std::tuple<microloop::Buffer, microloop::Buffer, bool>> cases = {
+    std::make_tuple("", "", true),
+    std::make_tuple("a", "a", true),
+    std::make_tuple("", "a", false),
+    std::make_tuple("a", "b", false),
+  };
+
+  for (const auto &t : cases)
+  {
+    auto &[a, b, is_equal] = t;
+
+    ASSERT_EQ(a == b, is_equal);
   }
 }
 
