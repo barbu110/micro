@@ -2,10 +2,13 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace microloop
 {
@@ -17,34 +20,33 @@ class Buffer
 
 public:
   /**
-   * Create a not-allocated buffer.
+   * \brief Create a not-allocated buffer.
+   *
+   * \param sz The size of the buffer.
    */
-  Buffer() noexcept : sz{0}, buf{nullptr}
+  Buffer(std::size_t sz = 0) noexcept : sz{sz}, buf{sz ? calloc(sz, sizeof(std::uint8_t)) : nullptr}
   {}
 
   /**
-   * Create a zeroed buffer of given size.
-   * @param sz The size of the buffer.
-   */
-  explicit Buffer(std::size_t sz) noexcept : sz{sz}, buf{calloc(sz, sizeof(std::uint8_t))}
-  {}
-
-  /**
-   * Create a buffer by copying `sz` bytes from the given `src` char array.
-   * @param src The source char array to copy from.
-   * @param sz How many bytes to copy from the source array.
+   * \brief Create a buffer by copying \p sz bytes from the given \p src char array.
+   *
+   * \param src The source char array to copy from.
+   * \param sz How many bytes to copy from the source array.
    */
   Buffer(const char *src, std::size_t sz) : Buffer{sz}
   {
-    std::memcpy(buf, src, sz);
+    if (sz)
+    {
+      std::memcpy(buf, src, sz);
+    }
   }
 
   /**
-   * Create a buffer from the given string. The size of the buffer will be the size of the given
-   * string including the null character.
-   * @param src The source string.
+   * \brief Create a buffer from the given string. The size of the buffer will be the size of the
+   * given string without the null character.
+   * \param src The source string.
    */
-  Buffer(const char *src) : Buffer{strlen(src) + 1}
+  Buffer(const char *src) : Buffer{strlen(src)}
   {
     std::memcpy(buf, src, sz);
   }
@@ -76,13 +78,30 @@ public:
     return *this;
   }
 
+  /**
+   * \brief Concatenate \p count bytes of the \p other buffer to this one.
+   *
+   * \param other The buffer from which the bytes are to be extracted.
+   * \param count How many bytes are to be extracted from the other buffer and concatenated to this
+   * one.
+   */
   void concat(const Buffer &other, std::size_t count) noexcept
   {
+    if (!count)
+    {
+      return;
+    }
+
     auto curr_size = size();
     resize(size() + count);
     std::memcpy(buf + curr_size, other.data(), count);
   }
 
+  /**
+   * \brief Concatenate the entire \p other buffer to this one.
+   *
+   * \param other The buffer to be concatenated to this one.
+   */
   void concat(const Buffer &other) noexcept
   {
     concat(other, other.size());
@@ -137,8 +156,12 @@ public:
    */
   void resize(std::size_t new_size) noexcept
   {
-    buf = realloc(buf, new_size);
-    sz = new_size;
+    void *tmp = realloc(buf, new_size);
+    if (tmp != nullptr)
+    {
+      buf = tmp;
+      sz = new_size;
+    }
   }
 
   friend void swap(Buffer &lhs, Buffer &rhs) noexcept

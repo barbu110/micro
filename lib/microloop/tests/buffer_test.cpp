@@ -2,13 +2,12 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "gtest/gtest.h"
-
 #include "microloop/buffer.h"
 
-#include <string>
-#include <cstring>
+#include "gtest/gtest.h"
 #include <cstdint>
+#include <cstring>
+#include <string>
 
 namespace microloop
 {
@@ -35,6 +34,20 @@ TEST(Buffer, ConstructsWithSize)
   }
 }
 
+TEST(Buffer, ConstructsWithSizeZero)
+{
+  std::size_t zero = 0;
+  Buffer buf(zero);
+
+  ASSERT_EQ(buf.size(), 0);
+  ASSERT_EQ(buf.data(), nullptr);
+
+  Buffer cpy{buf};
+
+  ASSERT_EQ(cpy.size(), 0);
+  ASSERT_EQ(cpy.data(), nullptr);
+}
+
 TEST(Buffer, ConstructsFromCString)
 {
   const char *constructor_string = "c_string";
@@ -42,7 +55,7 @@ TEST(Buffer, ConstructsFromCString)
 
   const char *actual_data = static_cast<char *>(buf.data());
 
-  ASSERT_EQ(buf.size(), std::strlen(actual_data) + 1);
+  ASSERT_EQ(buf.size(), std::strlen(actual_data));
   ASSERT_STREQ(actual_data, constructor_string);
 }
 
@@ -60,19 +73,16 @@ TEST(Buffer, ConstructsFromTruncatedCString)
 
 TEST(Buffer, ConcatsCorrectlyWithoutSize)
 {
-  const char *str_a = "a";
-  const char *str_b = "b";
+  const char *str_a = "ab";
+  const char *str_b = "cd";
 
-  const char expected_result[] = {'a', '\0', 'b', '\0'};
+  const char expected_result[] = {'a', 'b', 'c', 'd'};
 
   Buffer a{str_a}, b{str_b};
 
   a.concat(b);
 
-  /*
-   * 2 is the number of NULL-characters.
-   */
-  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b) + 2);
+  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b));
 
   const char *actual = static_cast<const char *>(a.data());
   for (std::size_t i = 0; i < std::size(expected_result); i++)
@@ -83,19 +93,17 @@ TEST(Buffer, ConcatsCorrectlyWithoutSize)
 
 TEST(Buffer, ConcatsCorrectlyWithSize)
 {
-  const char *str_a = "a";
-  const char *str_b = "b";
+  const char *str_a = "ab";
+  const char *str_b = "cd";
 
-  const char expected_result[] = {'a', '\0', 'b'};
+  const char expected_result[] = {'a', 'b', 'c'};
 
   Buffer a{str_a}, b{str_b};
 
-  a.concat(b, 1);
+  constexpr std::size_t concat_size = 1;
+  a.concat(b, concat_size);
 
-  /*
-   * The term 1 comes from the NULL charascter from str_a.
-   */
-  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b) + 1);
+  ASSERT_EQ(a.size(), std::strlen(str_a) + concat_size);
 
   const char *actual = static_cast<const char *>(a.data());
   for (std::size_t i = 0; i < std::size(expected_result); i++)
@@ -104,4 +112,4 @@ TEST(Buffer, ConcatsCorrectlyWithSize)
   }
 }
 
-}
+}  // namespace microloop
