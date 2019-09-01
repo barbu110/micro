@@ -12,134 +12,129 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <ostream>
 
 namespace microhttp::http
 {
 
-struct ReqStartLineInfo
+struct RequestTestProvider
 {
-  std::string start_line;
-  std::string method;
-  std::string uri;
-  Version http_version;
+  std::string note;
+  std::vector<microloop::Buffer> chunks;
+  bool valid;
+  HttpRequest expected_request;
 };
 
-struct HeaderInfo
+std::ostream &operator<<(std::ostream &os, const RequestTestProvider &test)
 {
-  std::string header_line;
-  std::string field_name;
-  std::string field_value;
-};
-
-TEST(RequestParser, ParseStartLine)
-{
-  std::vector<ReqStartLineInfo> valid_cases = {
-      {"GET http://localhost/ HTTP/1.1\r\n", "get", "http://localhost/", Version{1, 1}},
-      {"POST http://example.com HTTP/1.0\r\n", "post", "http://example.com", Version{1, 0}},
-  };
-
-  for (const auto &c : valid_cases)
-  {
-    HttpRequest req;
-    auto valid = RequestParser::parse_start_line(c.start_line, req);
-
-    ASSERT_TRUE(valid);
-    ASSERT_EQ(req.get_http_method(), c.method);
-    ASSERT_EQ(req.get_uri(), c.uri);
-    ASSERT_EQ(req.get_http_version().major, c.http_version.major);
-    ASSERT_EQ(req.get_http_version().minor, c.http_version.minor);
-  }
-
-  std::vector<std::string> invalid_start_lines = {
-      "http://localhost\r\n",
-      "http://localhost",
-      "GET\r\n",
-      "GET HTTP/1.1\r\n",
-      "GET HTTP\r\n",
-      "GET / HTTP\r\n",
-  };
-
-  for (const auto &c : invalid_start_lines)
-  {
-    HttpRequest req;
-    ASSERT_FALSE(RequestParser::parse_start_line(c, req));
-  }
+  os << test.note;
+  return os;
 }
 
-TEST(RequestParser, ParseHeaderLine)
+std::vector<RequestTestProvider> request_parser_provider()
 {
-  std::vector<HeaderInfo> valid_header_lines = {
-      {"Content-Type: application/json\r\n", "Content-Type", "application/json"},
-      {"Content-Type:text/plain    \r\n", "Content-Type", "text/plain"},
-      {"Content-Length:    17   \r\n", "Content-Length", "17"},
-      {"x-powered-by:\tmicroloop v0.9.1   \r\n", "X-Powered-By", "microloop v0.9.1"},
-  };
+  std::vector<RequestTestProvider> tests;
 
-  for (const auto &c : valid_header_lines)
   {
-    HttpRequest req;
-    ASSERT_TRUE(RequestParser::parse_header_line(c.header_line, req));
+    std::vector<microloop::Buffer> chunks = {
+      "GET / HTTP/1.1\r\n",
+    };
 
-    auto [field_value, found] = req.get_header(c.field_name);
+    HttpRequest expected_request{"get", "/"};
 
-    EXPECT_TRUE(found);
-    EXPECT_EQ(field_value, c.field_value);
+    RequestTestProvider test{"valid simple GET request", chunks, true, expected_request};
+    tests.push_back(test);
   }
 
-  std::vector<std::string> invalid_header_lines = {
-      "Content-Type : application/json\r\n",
-      "Content Type: text/plain\r\n",
-      "Content-Length = 17\r\n",
-      " X-Powered-By: microloop\r\n",
-  };
-
-  for (const auto &c : invalid_header_lines)
   {
-    HttpRequest req;
-    ASSERT_FALSE(RequestParser::parse_header_line(c, req));
+    std::vector<microloop::Buffer> chunks = {
+      "GET / ",
+      "HTTP/1.1\r\n",
+    };
+
+    HttpRequest expected_request{"get", "/"};
+
+    RequestTestProvider test{"chunked GET request", chunks, true, expected_request};
+    tests.push_back(test);
   }
+
+  {
+    std::vector<microloop::Buffer> chunks = {
+      "POST /foo HTTP/1.1\r\n",
+      "Content-Length: 0\r\n\r\n",
+    };
+
+    HttpRequest expected_request{"post", "/foo"};
+    expected_request.set_header("Content-Length", "0");
+
+    RequestTestProvider test{"chunked POST request, no body", chunks, true, expected_request};
+    tests.push_back(test);
+  }
+
+  {
+    std::vector<microloop::Buffer> chunks = {
+      "POST /foo HTTP/1.1\r\n",
+      "Content-Length: 7\r\n\r\n",
+      "example",
+    };
+
+    HttpRequest expected_request{"post", "/foo"};
+    expected_request.set_header("Content-Length", "7");
+    expected_request.get_body().concat("example");
+
+    RequestTestProvider test{"chunked POST request, with body", chunks, true, expected_request};
+    tests.push_back(test);
+  }
+
+  {
+    std::vector<microloop::Buffer> chunks = {
+      "POST /foo HTTP/1.1\r\n",
+      "Content-Length: 7\r\n",
+      "\r\nexample", /* note the CRLF before the body is in the same chunk with the body itself */
+    };
+
+    HttpRequest expected_request{"post", "/foo"};
+    expected_request.set_header("Content-Length", "7");
+    expected_request.get_body().concat("example");
+
+    RequestTestProvider test{"chunked POST request, with body", chunks, true, expected_request};
+    tests.push_back(test);
+  }
+
+  return tests;
 }
 
-#define BUFFER_FROM_STR_WITHOUT_NULL(str) (microloop::Buffer{str, std::strlen(str)})
+class RequestParserTest : public testing::TestWithParam<RequestTestProvider>
+{};
 
-TEST(RequestParser, AddChunkValid)
+TEST_P(RequestParserTest, ParseRequest)
 {
+  auto &test = GetParam();
+
   RequestParser parser;
-  const auto &request = parser.get_parsed_request();
 
-  ASSERT_EQ(parser.expected_line_type, RequestParser::START_LINE);
+  auto &actual_request = parser.get_parsed_request();
+  auto &expected_request = test.expected_request;
 
-  parser.add_chunk(BUFFER_FROM_STR_WITHOUT_NULL("POST http://www.example.com HTTP/1.1\r\n"));
+  for (const auto &c : test.chunks)
+  {
+    parser.add_chunk(c);
+  }
 
-  ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER);
-  ASSERT_EQ(parser.get_status(), RequestParser::NO_HEADERS);
-
-  Version expected_version{1, 1};
-  ASSERT_EQ(request.get_http_method(), "post");
-  ASSERT_EQ(request.get_http_version(), expected_version);
-  ASSERT_EQ(request.get_uri(), "http://www.example.com");
-
-  parser.add_chunk(BUFFER_FROM_STR_WITHOUT_NULL("Content-Length: 7\r\n"));
-
-  ASSERT_EQ(parser.expected_line_type, RequestParser::HEADER_OR_CRLF);
-  ASSERT_EQ(parser.get_status(), RequestParser::OK);
-
-  ASSERT_EQ(request.get_headers().size(), 1);
-
-  auto [content_length, header_found] = request.get_header("Content-Length");
-  ASSERT_TRUE(header_found);
-  ASSERT_EQ(content_length, "7");
-
-  parser.add_chunk("\r\n");
-
-  ASSERT_EQ(parser.expected_line_type, RequestParser::BODY);
-  ASSERT_EQ(parser.get_status(), RequestParser::OK);
-
-  parser.add_chunk("example");
-
-  ASSERT_EQ(request.get_body_string(), "example");
-  ASSERT_EQ(parser.get_status(), RequestParser::FINISHED);
-  ASSERT_EQ(parser.expected_line_type, RequestParser::END);
+  if (test.valid)
+  {
+    ASSERT_EQ(actual_request.get_http_version(), expected_request.get_http_version());
+    ASSERT_EQ(actual_request.get_uri(), expected_request.get_uri());
+    ASSERT_EQ(actual_request.get_http_method(), expected_request.get_http_method());
+    ASSERT_EQ(actual_request.get_headers(), expected_request.get_headers());
+    ASSERT_EQ(actual_request.get_body(), expected_request.get_body());
+  }
 }
 
-}  // namespace microhttp::http
+INSTANTIATE_TEST_CASE_P(
+  Http,
+  RequestParserTest,
+  testing::ValuesIn(request_parser_provider())
+);
+
+}

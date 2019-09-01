@@ -20,8 +20,9 @@ class RequestParser
 {
 #ifdef BUILD_TESTS
   FRIEND_TEST(RequestParser, ParseStartLine);
+  FRIEND_TEST(RequestParserTest, ParseStartLine);
   FRIEND_TEST(RequestParser, ParseHeaderLine);
-  FRIEND_TEST(RequestParser, AddChunkValid);
+  FRIEND_TEST(RequestParser, AddChunkDetail);
 #endif
 
   enum ExpectedLine

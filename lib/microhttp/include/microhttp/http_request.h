@@ -21,6 +21,8 @@ class HttpRequest
 public:
   HttpRequest();
 
+  HttpRequest(std::string method, std::string uri);
+
   Version get_http_version() const
   {
     return http_version;

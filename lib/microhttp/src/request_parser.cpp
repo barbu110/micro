@@ -25,6 +25,17 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
     return;
   }
 
+  request_buffer.concat(buf);
+
+  auto sv = request_buffer.str_view();
+  std::size_t crlf_pos = 0;
+
+  while ((crlf_pos = sv.find("\r\n", 0)) != std::string_view::npos && expected_line_type != BODY)
+  {
+    parse_line(sv.substr(0, crlf_pos + 2));
+    sv.remove_prefix(crlf_pos + 2);
+  }
+
   if (expected_line_type == BODY)
   {
     auto [content_length, found] = request.get_content_length();
@@ -37,6 +48,10 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
     }
 
     auto &body = request.get_body();
+
+    std::cerr << "Content-Length: " << content_length << "\n";
+    std::cerr << "Body: " << body.str_view() << "END BODY\n";
+
     body.concat(buf, content_length - body.size());
 
     if (body.size() == content_length)
@@ -44,19 +59,6 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
       status = FINISHED;
       expected_line_type = END;
     }
-
-    return;
-  }
-
-  request_buffer.concat(buf);
-
-  auto sv = request_buffer.str_view();
-  std::size_t crlf_pos = 0;
-
-  while ((crlf_pos = sv.find("\r\n", 0)) != std::string_view::npos)
-  {
-    parse_line(sv.substr(0, crlf_pos + 2));
-    sv.remove_prefix(crlf_pos + 2);
   }
 }
 
