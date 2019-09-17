@@ -7,24 +7,14 @@
 #include "microhttp/http_request.h"
 #include "microloop/buffer.h"
 
-#ifdef BUILD_TESTS
-#include "gtest/gtest_prod.h"
-#endif
-
 #include <string>
 
 namespace microhttp::http
 {
 
-class RequestParser
+template <class Standard>
+class RequestParser : protected Standard
 {
-#ifdef BUILD_TESTS
-  FRIEND_TEST(RequestParser, ParseStartLine);
-  FRIEND_TEST(RequestParserTest, ParseStartLine);
-  FRIEND_TEST(RequestParser, ParseHeaderLine);
-  FRIEND_TEST(RequestParser, AddChunkDetail);
-#endif
-
   enum ExpectedLine
   {
     END,
@@ -71,15 +61,6 @@ public:
    * Retrieve the HTTP request as parsed so far.
    */
   const HttpRequest &get_parsed_request() const;
-
-private:
-  /**
-   * Parse the current line according to its expected type.
-   */
-  void parse_line(std::string_view sv);
-
-  static bool parse_start_line(std::string_view sv, HttpRequest &req);
-  static bool parse_header_line(std::string_view sv, HttpRequest &req);
 
 private:
   /**

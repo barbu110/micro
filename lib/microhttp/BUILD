@@ -11,6 +11,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/microloop",
+        "@com_google_absl//absl/strings",
         "@gtest//:gtest_prod",
     ],
 )
