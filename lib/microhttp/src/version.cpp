@@ -13,22 +13,22 @@ namespace microhttp::http
 
 const std::string Version::HEADER = "HTTP/";
 
-std::pair<Version, bool> Version::from_string(const std::string &str)
+std::pair<Version, bool> Version::from_string(std::string_view sv)
 {
   Version v{0, 0};
 
-  if (str.size() <= HEADER.size() || str.substr(0, HEADER.size()) != HEADER)
+  if (sv.size() <= HEADER.size() || sv.substr(0, HEADER.size()) != HEADER)
   {
     return std::make_pair(v, false);
   }
 
-  if (!std::isdigit(str[5]) || !std::isdigit(str[7]) || str[6] != '.')
+  if (!std::isdigit(sv[5]) || !std::isdigit(sv[7]) || sv[6] != '.')
   {
     return std::make_pair(v, false);
   }
 
-  v.major = str[5] - '0';
-  v.minor = str[7] - '0';
+  v.major = sv[5] - '0';
+  v.minor = sv[7] - '0';
 
   if (v.major == 0)
   {

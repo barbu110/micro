@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <string>
 #include <utility>
+#include <string_view>
 
 namespace microhttp::http
 {
@@ -20,10 +21,12 @@ struct Version
   static const std::string HEADER;
 
   /**
-   * Parse an HTTP version string.
-   * @param str The version string in the format HTTP/X.X
+   * \brief Parse an HTTP version string view.
+   * \param sv The string view containing the textual HTTP version in the format HTTP/X.X.
+   * \returns A pair with two elements; first is an HTTP version object, and the second is a flag
+   * indicating whether the parsing failed or not.
    */
-  static std::pair<Version, bool> from_string(const std::string &str);
+  static std::pair<Version, bool> from_string(std::string_view sv);
 
   operator std::string() const;
 
