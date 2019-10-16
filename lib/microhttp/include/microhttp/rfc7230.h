@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include "microhttp/version.h"
+
 #include <optional>
 #include <string_view>
-
-#include "microhttp/version.h"
 
 namespace microhttp::http
 {
@@ -38,7 +38,7 @@ protected:
    * \returns Information extracted from the given header line, or an empty value if the line was
    * not valid according to the standard and the limitations imposed by this implementation.
    */
-  HeaderLineData parse_header_line(std::string_view str);
+  std::optional<HeaderLineData> parse_header_line(std::string_view str);
 };
 
 /**

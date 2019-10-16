@@ -5,6 +5,7 @@
 #pragma once
 
 #include "microhttp/http_request.h"
+#include "microhttp/rfc7230.h"
 #include "microloop/buffer.h"
 
 #include <string>
@@ -12,9 +13,9 @@
 namespace microhttp::http
 {
 
-template <class Standard>
-class RequestParser : protected Standard
+class BasicRequestParser
 {
+public:
   enum ExpectedLine
   {
     END,
@@ -23,9 +24,6 @@ class RequestParser : protected Standard
     HEADER_OR_CRLF,
     BODY,
   };
-
-public:
-  static const std::size_t MAX_REQUEST_LINE_LEN;
 
   enum Status
   {
@@ -38,7 +36,14 @@ public:
     FINISHED,
   };
 
-  RequestParser();
+  static const std::size_t MAX_REQUEST_LINE_LEN;
+};
+
+class RequestParser : protected RFC7230, public BasicRequestParser
+{
+public:
+  RequestParser() : status{Status::NO_DATA}, expected_line_type{START_LINE}
+  {}
 
   /**
    * Add a new chunk to be parsed by the parser.

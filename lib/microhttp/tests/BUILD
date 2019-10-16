@@ -9,16 +9,16 @@ cc_test(
   ],
 )
 
-# cc_test(
-#   name = "request_parser_internal",
-#   timeout = "short",
-#   srcs = ["request_parser_internal_test.cpp"],
-#   deps = [
-#     "@gtest//:gtest",
-#     "@gtest//:gtest_main",
-#     "//lib/microhttp:microhttp",
-#   ],
-# )
+cc_test(
+  name = "rfc7230",
+  timeout = "short",
+  srcs = ["rfc7230_test.cpp"],
+  deps = [
+    "@gtest//:gtest",
+    "@gtest//:gtest_main",
+    "//lib/microhttp:microhttp",
+  ],
+)
 
 cc_test(
   name = "request_parser",
