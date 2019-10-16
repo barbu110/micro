@@ -13,8 +13,7 @@ template <typename T>
 inline constexpr bool is_c_string = std::is_same_v<T, char *> || std::is_same_v<T, const char *>;
 
 template <typename T, typename U>
-std::enable_if_t<!is_c_string<T> && !is_c_string<U>, bool>
-ends_with(T sv, U needle) noexcept
+std::enable_if_t<!is_c_string<T> && !is_c_string<U>, bool> ends_with(T sv, U needle) noexcept
 {
   if (needle.empty())
   {
@@ -41,9 +40,31 @@ ends_with(T sv, U needle) noexcept
 }
 
 template <typename T, typename U>
-std::enable_if_t<is_c_string<T> && is_c_string<U>, bool>
-ends_with(T sv, U needle) noexcept {
+std::enable_if_t<is_c_string<T> || is_c_string<U>, bool> ends_with(T sv, U needle) noexcept
+{
   return ends_with(std::string_view(sv), std::string_view(needle));
+}
+
+template <typename T, typename U>
+std::enable_if_t<!is_c_string<T> && !is_c_string<U>, bool> starts_with(T s, U needle) noexcept
+{
+  if (needle.empty() || s == needle)
+  {
+    return true;
+  }
+
+  if (s.empty() || needle.size() > s.size())
+  {
+    return false;
+  }
+
+  return s.find(needle) == 0;
+}
+
+template <typename T, typename U>
+std::enable_if_t<is_c_string<T> || is_c_string<U>, bool> starts_with(T s, U needle)
+{
+  return starts_with(std::string_view(s), std::string_view(needle));
 }
 
 }  // namespace utils::string
