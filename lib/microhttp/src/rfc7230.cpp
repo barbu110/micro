@@ -72,27 +72,31 @@ std::optional<HeaderLineData> RFC7230::parse_header_line(std::string_view sv) no
     return std::nullopt;  // does not respect the "Name: Value" format
   }
 
+  if (parts.front().empty())
+  {
+    return std::nullopt;  // cannot allow name to be empty
+  }
+
   if (utils::string::starts_with(parts[0], " ") || utils::string::ends_with(parts[0], " "))
   {
     return std::nullopt;
   }
 
-  auto value = parts[1];
+  auto &value = parts[1];
 
-  std::size_t value_start = 0;
-  while (value_start < value.size() && (value[value_start] == ' ' || value[value_start] == '\t'))
+  if (auto first_nonws_idx = value.find_first_not_of(" \t"); first_nonws_idx == 0)
   {
-    value_start++;
+    return std::nullopt;  // value of the header does not start with whitespace
+  }
+  else
+  {
+    value.remove_prefix(std::min(first_nonws_idx, value.size()));
   }
 
-  std::size_t value_end = value.size() - 1;
-  while (value_end > value_start && (value[value_end] == ' ' || value[value_end] == '\t'))
+  if (auto last_nonws_idx = value.find_last_not_of(" \t"); last_nonws_idx != std::string_view::npos)
   {
-    value_end--;
+    value.remove_suffix(value.size() - last_nonws_idx - 1);
   }
-
-  value.remove_prefix(value_start);  // remove the leading whitespace
-  value.remove_suffix(value_end);  // remove the trailing whitespace
 
   return HeaderLineData{parts[0], value};
 }
