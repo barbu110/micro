@@ -164,12 +164,27 @@ public:
    */
   void resize(std::size_t new_size) noexcept
   {
+    if (new_size == 0)
+    {
+      clear();
+
+      return;
+    }
+
     void *tmp = realloc(buf, new_size);
     if (tmp != nullptr)
     {
       buf = tmp;
       sz = new_size;
     }
+  }
+
+  void clear() noexcept
+  {
+    free(buf);
+
+    buf = nullptr;
+    sz = 0;
   }
 
   /**

@@ -12,6 +12,7 @@
 #include <string>
 #include <cstdlib>
 #include <cstdint>
+#include <optional>
 
 namespace microhttp::http
 {
@@ -120,16 +121,16 @@ public:
     return body.str();
   }
 
-  std::pair<std::size_t, bool> get_content_length() const noexcept
+  std::optional<std::size_t> get_content_length() const noexcept
   {
     auto [content_length, found] = get_header("Content-Length");
 
     if (!found)
     {
-      return std::make_pair(0, false);
+      return std::nullopt;
     }
 
-    return std::make_pair(std::atoll(content_length.c_str()), true);
+    return std::atoll(content_length.c_str());
   }
 
 private:

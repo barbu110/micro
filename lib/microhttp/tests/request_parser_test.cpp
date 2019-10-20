@@ -80,7 +80,7 @@ std::vector<RequestTestProvider> request_parser_provider()
 
     HttpRequest expected_request{"post", "/foo"};
     expected_request.set_header("Content-Length", "7");
-    expected_request.get_body().concat("example");
+    expected_request.get_body() = microloop::Buffer{"example"}
 
     RequestTestProvider test{"chunked POST request, with body", chunks, true, expected_request};
     tests.push_back(test);

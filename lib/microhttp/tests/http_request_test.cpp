@@ -39,4 +39,17 @@ TEST(HttpRequest, SetHeader)
   EXPECT_EQ(header_value, "text/plain");
 }
 
+TEST(HttpRequest, GetContentLength)
+{
+  HttpRequest req;
+
+  ASSERT_FALSE(req.get_content_length().has_value());
+
+  req.set_header("Content-Length", "128");
+
+  auto content_length = req.get_content_length();
+  ASSERT_TRUE(content_length.has_value());
+  EXPECT_EQ(128, *content_length);
+}
+
 }

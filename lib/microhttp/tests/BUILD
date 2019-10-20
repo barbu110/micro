@@ -23,7 +23,7 @@ cc_test(
 cc_test(
   name = "request_parser",
   timeout = "short",
-  srcs = ["request_parser_test.cpp", "request_parser_internal_test.cpp"],
+  srcs = ["request_parser_test.cpp"],
   deps = [
     "@gtest//:gtest",
     "@gtest//:gtest_main",
