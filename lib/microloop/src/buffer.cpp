@@ -28,4 +28,15 @@ bool Buffer::operator==(const Buffer &other) const
   return true;
 }
 
+void Buffer::remove_prefix(std::size_t n) noexcept
+{
+  buf = std::memmove(buf, static_cast<std::uint8_t *>(buf) + n, size() - n);
+  sz -= n;
+}
+
+void Buffer::remove_suffix(std::size_t n) noexcept
+{
+  resize(size() - n);
+}
+
 }  // namespace microloop

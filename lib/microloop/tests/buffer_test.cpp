@@ -113,6 +113,26 @@ TEST(Buffer, ConcatsCorrectlyWithSize)
   }
 }
 
+TEST(Buffer, RemovePrefix)
+{
+  microloop::Buffer buf{"foo bar"};
+
+  EXPECT_STREQ("foo bar", buf.str().c_str());
+
+  buf.remove_prefix(4);
+  EXPECT_STREQ("bar", buf.str().c_str());
+}
+
+TEST(Buffer, RemoveSuffix)
+{
+  microloop::Buffer buf{"foo bar"};
+
+  EXPECT_STREQ("foo bar", buf.str().c_str());
+
+  buf.remove_suffix(4);
+  EXPECT_STREQ("foo", buf.str().c_str());
+}
+
 TEST(Buffer, Comparison)
 {
   std::vector<std::tuple<microloop::Buffer, microloop::Buffer, bool>> cases = {
@@ -128,6 +148,18 @@ TEST(Buffer, Comparison)
 
     ASSERT_EQ(a == b, is_equal);
   }
+}
+
+TEST(Buffer, StrView)
+{
+  microloop::Buffer buf{"foo bar baz"};
+
+  EXPECT_EQ(buf.str_view(), std::string_view{"foo bar baz"});
+  EXPECT_EQ(buf.str_view(0), std::string_view{"foo bar baz"});
+  EXPECT_EQ(buf.str_view(4), std::string_view{"bar baz"});
+  EXPECT_EQ(buf.str_view(0, 3), std::string_view{"foo"});
+  EXPECT_EQ(buf.str_view(4, 3), std::string_view{"bar"});
+  EXPECT_EQ(buf.str_view(0, 128), std::string_view{"foo bar baz"});
 }
 
 }  // namespace microloop

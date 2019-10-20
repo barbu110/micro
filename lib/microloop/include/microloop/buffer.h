@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <algorithm>
 
 namespace microloop
 {
@@ -126,12 +127,19 @@ public:
   }
 
   /**
-   * Get an std::string_view from this buffer.
+   * \brief Get an std::string_view from this buffer.
+   * \param start_idx Offset to start at, in bytes
+   * \param n_bytes How many bytes to be included
    */
-  std::string_view str_view() const
+  std::string_view str_view(std::size_t start_idx, std::size_t n_bytes) const
   {
     const std::string_view::value_type *s = reinterpret_cast<std::string_view::value_type *>(buf);
-    return std::string_view{s, size()};
+    return std::string_view{s + start_idx, std::min(size() - start_idx, n_bytes)};
+  }
+
+  std::string_view str_view(std::size_t start_idx = 0) const
+  {
+    return str_view(start_idx, size());
   }
 
   /**
@@ -163,6 +171,24 @@ public:
       sz = new_size;
     }
   }
+
+  /**
+   * \brief Remove n bytes from the beginning of the buffer.
+   *
+   * Note that, if `n > size()`, the behavior is undefined.
+   *
+   * \param n How many bytes to be removed.
+   */
+  void remove_prefix(std::size_t n) noexcept;
+
+  /**
+   * \brief Remove n bytes from the end of the buffer.
+   *
+   * Note that, if `n > size()`, the behavior is undefined.
+   *
+   * \param n How many bytes to be removed.
+   */
+  void remove_suffix(std::size_t n) noexcept;
 
   friend void swap(Buffer &lhs, Buffer &rhs) noexcept
   {
