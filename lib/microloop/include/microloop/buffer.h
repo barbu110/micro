@@ -1,218 +1,156 @@
-// Copyright 2019 Stefan Silviu
+//
+// Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
+//
 
 #pragma once
 
-#include <cassert>
 #include <cstdint>
-#include <cstring>
-#include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <algorithm>
 
 namespace microloop
 {
 
 class Buffer
 {
-  std::size_t sz;
-  void *buf;
-
 public:
   /**
-   * \brief Create a not-allocated buffer.
-   *
-   * \param sz The size of the buffer.
+   * \brief Create a buffer of a given size, filled with zeros.
+   * \param count How many bytes to be allocated and zeroed out.
    */
-  Buffer(std::size_t sz = 0) noexcept : sz{sz}, buf{sz ? calloc(sz, sizeof(std::uint8_t)) : nullptr}
-  {}
+  Buffer(std::size_t count = 0);
 
   /**
-   * \brief Create a buffer by copying \p sz bytes from the given \p src char array.
-   *
-   * \param src The source char array to copy from.
-   * \param sz How many bytes to copy from the source array.
+   * \brief Create a buffer from a C string, or substring. Note that, the NUL byte at the end of a
+   * C string is not included in the buffer if the \p count parameter is omitted.
+   * \param str The C string to be used
+   * \param count The number of bytes to be included of the given string. If omitted, the entire
+   * string will be used (without the NUL byte).
    */
-  Buffer(const char *src, std::size_t sz) : Buffer{sz}
+  Buffer(const char *str, std::size_t count = -1);
+
+  /**
+   * \brief Copy constructor.
+   */
+  Buffer(const Buffer &other);
+
+  /**
+   * \brief Move constructor.
+   */
+  Buffer(Buffer &&other) noexcept;
+
+  /**
+   * \brief Copy/move assignment operator. Implemented using the copy-and-swap idiom.
+   */
+  Buffer &operator=(Buffer other);
+
+  friend void swap(Buffer &a, Buffer &b)
   {
-    if (sz)
-    {
-      std::memcpy(buf, src, sz);
-    }
+    using std::swap;
+
+    swap(a.data_, b.data_);
+    swap(a.size_, b.size_);
   }
 
   /**
-   * \brief Create a buffer from the given string. The size of the buffer will be the size of the
-   * given string without the null character.
-   * \param src The source string.
+   * \brief Get the raw underlying data.
    */
-  Buffer(const char *src) : Buffer{strlen(src)}
+  void *data() noexcept
   {
-    std::memcpy(buf, src, sz);
+    return static_cast<void *>(data_);
   }
 
-  ~Buffer()
+  const void *data() const noexcept
   {
-    free(buf);
+    return static_cast<const void *>(data_);
   }
 
   /**
-   * Copy constructor.
-   */
-  Buffer(const Buffer &other) noexcept : Buffer{other.sz}
-  {
-    std::memcpy(buf, other.buf, other.sz);
-  }
-
-  /**
-   * Move constructor.
-   */
-  Buffer(Buffer &&) noexcept = default;
-
-  /**
-   * Copy/move assignment.
-   */
-  Buffer &operator=(Buffer other) noexcept
-  {
-    swap(*this, other);
-    return *this;
-  }
-
-  /**
-   * \brief Concatenate \p count bytes of the \p other buffer to this one.
-   *
-   * \param other The buffer from which the bytes are to be extracted.
-   * \param count How many bytes are to be extracted from the other buffer and concatenated to this
-   * one.
-   */
-  void concat(const Buffer &other, std::size_t count) noexcept
-  {
-    if (!count)
-    {
-      return;
-    }
-
-    auto curr_size = size();
-    resize(size() + count);
-    std::memcpy(buf + curr_size, other.data(), count);
-  }
-
-  /**
-   * \brief Concatenate the entire \p other buffer to this one.
-   *
-   * \param other The buffer to be concatenated to this one.
-   */
-  void concat(const Buffer &other) noexcept
-  {
-    concat(other, other.size());
-  }
-
-  /**
-   * Retrieve the raw data held within the buffer
-   */
-  void *data() const noexcept
-  {
-    return buf;
-  }
-
-  /**
-   * Get the buffer data as an std::string. Note that this will work well for buffers that are
-   * suitable to be read as strings, but not for binary information, such as structures.
-   */
-  std::string str() const
-  {
-    const std::string::value_type *s = reinterpret_cast<std::string::value_type *>(buf);
-    return std::string{s, size()};
-  }
-
-  /**
-   * \brief Get an std::string_view from this buffer.
-   * \param start_idx Offset to start at, in bytes
-   * \param n_bytes How many bytes to be included
-   */
-  std::string_view str_view(std::size_t start_idx, std::size_t n_bytes) const
-  {
-    const std::string_view::value_type *s = reinterpret_cast<std::string_view::value_type *>(buf);
-    return std::string_view{s + start_idx, std::min(size() - start_idx, n_bytes)};
-  }
-
-  std::string_view str_view(std::size_t start_idx = 0) const
-  {
-    return str_view(start_idx, size());
-  }
-
-  /**
-   * Retrieve the size of the buffer.
+   * \brief Get the size of the buffer.
    */
   std::size_t size() const noexcept
   {
-    return sz;
+    return size_;
   }
 
-  /**
-   * @return Whether the buffer is empty or not.
-   */
   bool empty() const noexcept
   {
-    return sz == 0;
+    return size_ == 0;
   }
 
   /**
-   * Resize the buffer to the given size. Note that in case of enlarging the size of the buffer,
-   * there is no guarantee that the new memory area will be zeroed out.
+   * \brief Construct a `std::string` out of this buffer. Note that construction of this string is
+   * done without any guarantees that the string will include a NUL byte or not.
+   * \param pos The starting offset for the resulting string. By default, the string will start at
+   * offset 0.
+   * \param count How many bytes to use in the resulting string.
    */
-  void resize(std::size_t new_size) noexcept
-  {
-    if (new_size == 0)
-    {
-      clear();
-
-      return;
-    }
-
-    void *tmp = realloc(buf, new_size);
-    if (tmp != nullptr)
-    {
-      buf = tmp;
-      sz = new_size;
-    }
-  }
-
-  void clear() noexcept
-  {
-    free(buf);
-
-    buf = nullptr;
-    sz = 0;
-  }
+  std::string str(std::size_t pos = 0, std::size_t count = -1) const;
 
   /**
-   * \brief Remove n bytes from the beginning of the buffer.
-   *
-   * Note that, if `n > size()`, the behavior is undefined.
-   *
-   * \param n How many bytes to be removed.
+   * \brief Get a string view out of this buffer.
+   * \param pos The offset into the buffer that will be contained by the resulting string view.
+   * \param count How many bytes to be put into the resulting string view.
    */
-  void remove_prefix(std::size_t n) noexcept;
+  std::string_view str_view(std::size_t pos = 0, std::size_t count = -1) const noexcept;
 
   /**
-   * \brief Remove n bytes from the end of the buffer.
-   *
-   * Note that, if `n > size()`, the behavior is undefined.
-   *
-   * \param n How many bytes to be removed.
+   * \brief Convert this buffer to a string view.
    */
-  void remove_suffix(std::size_t n) noexcept;
+  operator std::string_view() const noexcept;
 
-  friend void swap(Buffer &lhs, Buffer &rhs) noexcept
-  {
-    using std::swap;
-    swap(lhs.sz, rhs.sz);
-    swap(lhs.buf, rhs.buf);
-  }
-
+  /**
+   * \brief Compare this buffer to another. The comparison is done byte by byte.
+   */
   bool operator==(const Buffer &other) const noexcept;
+
+  /**
+   * \brief Resize this buffer to the given size.
+   * \param new_size The new size of the buffer. If the size is greater than the current size, then
+   * the contents of the trailing memory will be zeroed out.
+   */
+  void resize(std::size_t new_size);
+
+  /**
+   * \brief Remove \p count bytes from the beginning of this buffer.
+   * \param count How many bytes to be removed. If this is higher than \p size(), then the behavior
+   * is undefined.
+   */
+  Buffer &remove_prefix(std::size_t count);
+
+  /**
+   * \brief Remove \p count bytes from the end of this buffer.
+   * \param count How many bytes to be removed. If this is higher than \p size(), then the behavior
+   * is undefined.
+   */
+  Buffer &remove_suffix(std::size_t count);
+
+  /**
+   * \brief Release all the underlying memory of this buffer.
+   */
+  void clear() noexcept;
+
+  /**
+   * \brief Concatenate another buffer to the end of this one.
+   * \param other The buffer to be concatenated.
+   * \param count How many bytes to be taken from the beginning of the \p other buffer.
+   */
+  Buffer &concat(const Buffer &other, std::size_t count = -1);
+
+  /**
+   * \brief Concatenate another buffer to the end of this one.
+   */
+  Buffer &operator+=(const Buffer &other);
+
+  ~Buffer()
+  {
+    delete[] data_;
+  }
+
+private:
+  char *data_;
+  std::size_t size_;
 };
 
 }  // namespace microloop

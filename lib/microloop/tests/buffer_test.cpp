@@ -15,38 +15,24 @@ namespace microloop
 
 TEST(Buffer, DefaultConstructs)
 {
-  Buffer buf;
+  Buffer a;
 
-  ASSERT_EQ(buf.data(), nullptr);
-  ASSERT_EQ(buf.size(), 0);
+  ASSERT_EQ(a.data(), nullptr);
+  ASSERT_EQ(a.size(), 0);
 }
 
 TEST(Buffer, ConstructsWithSize)
 {
-  static std::size_t buf_size = 128;
-  Buffer buf{buf_size};
+  static constexpr std::size_t test_size = 128;
+  Buffer b{test_size};
+  std::uint8_t *data = static_cast<std::uint8_t *>(b.data());
 
-  ASSERT_EQ(buf.size(), buf_size);
+  ASSERT_EQ(b.size(), test_size);
 
-  char *data = static_cast<char *>(buf.data());
-  for (std::size_t i = 0; i < buf.size(); i++)
+  for (std::size_t i = 0; i != test_size; i++)
   {
-    ASSERT_EQ(data[i], 0);
+    EXPECT_EQ(data[i], 0);
   }
-}
-
-TEST(Buffer, ConstructsWithSizeZero)
-{
-  std::size_t zero = 0;
-  Buffer buf(zero);
-
-  ASSERT_EQ(buf.size(), 0);
-  ASSERT_EQ(buf.data(), nullptr);
-
-  Buffer cpy{buf};
-
-  ASSERT_EQ(cpy.size(), 0);
-  ASSERT_EQ(cpy.data(), nullptr);
 }
 
 TEST(Buffer, ConstructsFromCString)
@@ -54,10 +40,13 @@ TEST(Buffer, ConstructsFromCString)
   const char *constructor_string = "c_string";
   Buffer buf{constructor_string};
 
-  const char *actual_data = static_cast<char *>(buf.data());
+  ASSERT_EQ(buf.size(), std::strlen(constructor_string));
+  ASSERT_EQ(std::memcmp(buf.data(), constructor_string, std::strlen(constructor_string)), 0);
 
-  ASSERT_EQ(buf.size(), std::strlen(actual_data));
-  ASSERT_STREQ(actual_data, constructor_string);
+  Buffer cpy{buf};
+
+  ASSERT_EQ(cpy.size(), buf.size());
+  ASSERT_EQ(std::memcmp(cpy.data(), buf.data(), buf.size()), 0);
 }
 
 TEST(Buffer, ConstructsFromTruncatedCString)
@@ -66,30 +55,20 @@ TEST(Buffer, ConstructsFromTruncatedCString)
   Buffer buf{constructor_string, 2}; /* we want to construct with "c_" without null */
 
   ASSERT_EQ(buf.size(), 2);
-
-  const char *data = static_cast<char *>(buf.data());
-  ASSERT_EQ(data[0], 'c');
-  ASSERT_EQ(data[1], '_');
+  ASSERT_EQ(std::memcmp(buf.data(), constructor_string, buf.size()), 0);
 }
 
 TEST(Buffer, ConcatsCorrectlyWithoutSize)
 {
-  const char *str_a = "ab";
-  const char *str_b = "cd";
+  Buffer a{"foo"}, b{"bar"};
 
-  const char expected_result[] = {'a', 'b', 'c', 'd'};
-
-  Buffer a{str_a}, b{str_b};
+  ASSERT_EQ(a.str_view(), "foo");
+  ASSERT_EQ(b.str_view(), "bar");
 
   a.concat(b);
 
-  ASSERT_EQ(a.size(), std::strlen(str_a) + std::strlen(str_b));
-
-  const char *actual = static_cast<const char *>(a.data());
-  for (std::size_t i = 0; i < std::size(expected_result); i++)
-  {
-    ASSERT_EQ(actual[i], expected_result[i]);
-  }
+  ASSERT_EQ(a.size(), 6); /* the total length of "foo" and "bar" */
+  ASSERT_EQ(std::memcmp(a.data(), "foobar", 6), 0);
 }
 
 TEST(Buffer, ConcatsCorrectlyWithSize)
@@ -113,14 +92,28 @@ TEST(Buffer, ConcatsCorrectlyWithSize)
   }
 }
 
+TEST(Buffer, ConcatOperator)
+{
+  Buffer a{"foo"};
+  Buffer b{1};
+  Buffer c{"bar"};
+
+  a += b;
+  a += c;
+
+  const char expected_data[] = {'f', 'o', 'o', '\0', 'b', 'a', 'r'};
+  ASSERT_EQ(a.size(), sizeof(expected_data));
+  ASSERT_EQ(std::memcmp(a.data(), expected_data, a.size()), 0);
+}
+
 TEST(Buffer, RemovePrefix)
 {
   microloop::Buffer buf{"foo bar"};
 
-  EXPECT_STREQ("foo bar", buf.str().c_str());
+  EXPECT_EQ(buf.str_view(), "foo bar");
 
   buf.remove_prefix(4);
-  EXPECT_STREQ("bar", buf.str().c_str());
+  EXPECT_EQ(buf.str_view(), "bar");
 }
 
 TEST(Buffer, RemoveSuffix)
@@ -148,6 +141,18 @@ TEST(Buffer, Comparison)
 
     ASSERT_EQ(a == b, is_equal);
   }
+}
+
+TEST(Buffer, Str)
+{
+  microloop::Buffer buf{"foo bar baz"};
+
+  EXPECT_EQ(buf.str(), "foo bar baz");
+  EXPECT_EQ(buf.str(0), "foo bar baz");
+  EXPECT_EQ(buf.str(4), "bar baz");
+  EXPECT_EQ(buf.str(0, 3), "foo");
+  EXPECT_EQ(buf.str(4, 3), "bar");
+  EXPECT_EQ(buf.str(0, 128), "foo bar baz");
 }
 
 TEST(Buffer, StrView)
