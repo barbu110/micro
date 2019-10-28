@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -38,7 +39,7 @@ public:
   /**
    * \brief Move constructor.
    */
-  Buffer(Buffer &&other) noexcept;
+  Buffer(Buffer &&other) noexcept = default;
 
   /**
    * \brief Copy/move assignment operator. Implemented using the copy-and-swap idiom.
@@ -58,12 +59,12 @@ public:
    */
   void *data() noexcept
   {
-    return static_cast<void *>(data_);
+    return static_cast<void *>(data_.get());
   }
 
   const void *data() const noexcept
   {
-    return static_cast<const void *>(data_);
+    return static_cast<const void *>(data_.get());
   }
 
   /**
@@ -143,14 +144,9 @@ public:
    */
   Buffer &operator+=(const Buffer &other);
 
-  ~Buffer()
-  {
-    delete[] data_;
-  }
-
 private:
-  char *data_;
-  std::size_t size_;
+  std::unique_ptr<char[]> data_;
+  std::size_t size_{0};
 };
 
 }  // namespace microloop
