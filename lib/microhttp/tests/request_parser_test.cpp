@@ -47,7 +47,7 @@ std::vector<RequestTestProvider> request_parser_provider()
   }
 
   {
-    std::vector<microloop::Buffer> chunks = {
+    std::vector<microloop::Buffer> chunks{
       "GET / ",
       "HTTP/1.1\r\n",
     };
@@ -68,7 +68,7 @@ std::vector<RequestTestProvider> request_parser_provider()
     expected_request.set_header("Content-Length", "0");
 
     RequestTestProvider test{"chunked POST request, no body", chunks, true, expected_request};
-    tests.push_back(test);
+    tests.emplace_back(std::move(test));
   }
 
   {
@@ -80,10 +80,10 @@ std::vector<RequestTestProvider> request_parser_provider()
 
     HttpRequest expected_request{"post", "/foo"};
     expected_request.set_header("Content-Length", "7");
-    expected_request.get_body() = microloop::Buffer{"example"}
+    expected_request.get_body() = microloop::Buffer{"example"};
 
     RequestTestProvider test{"chunked POST request, with body", chunks, true, expected_request};
-    tests.push_back(test);
+    tests.push_back(std::move(test));
   }
 
   {

@@ -39,6 +39,10 @@ Buffer::Buffer(const Buffer &other) : Buffer{other.size_}
 
 Buffer::Buffer(Buffer &&other) noexcept : data_{other.data_}, size_{other.size_}
 {
+  /*
+   * We need to prevent the other buffer to delete the underlying memory when destroyed because we
+   * would leave this one with a dangling pointer.
+   */
   other.data_ = nullptr;
 }
 
@@ -76,6 +80,11 @@ bool Buffer::operator==(const Buffer &other) const noexcept
 
 void Buffer::resize(std::size_t new_size)
 {
+  if (new_size == size_)
+  {
+    return;
+  }
+
   if (!new_size)
   {
     delete[] data_;
@@ -83,8 +92,11 @@ void Buffer::resize(std::size_t new_size)
     return;
   }
 
-  char *next_data = new (std::nothrow) char[new_size]{0};
-  std::copy_n(data_, std::min(size_, new_size), next_data);
+  char *next_data = new char[new_size]{0};
+  if (size_)
+  {
+    std::copy_n(data_, std::min(size_, new_size), next_data);
+  }
 
   delete[] data_;
   data_ = next_data;
@@ -94,6 +106,12 @@ void Buffer::resize(std::size_t new_size)
 Buffer &Buffer::remove_prefix(std::size_t count)
 {
   std::size_t next_size = size_ - count;
+  if (next_size == 0)
+  {
+    clear();
+    return *this;
+  }
+
   char *next_data = new (std::nothrow) char[next_size]{0};
 
   std::copy_n(data_ + count, next_size, next_data);
@@ -122,7 +140,7 @@ Buffer &Buffer::concat(const Buffer &other, std::size_t count)
 
   auto prev_size = size_;
 
-  resize(size_ + count);
+  resize(prev_size + count);
   std::copy_n(other.data_, count, data_ + prev_size);
 
   return *this;
