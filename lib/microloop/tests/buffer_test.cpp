@@ -92,6 +92,17 @@ TEST(Buffer, ConcatsCorrectlyWithSize)
   }
 }
 
+TEST(Buffer, ConcatToEmpty)
+{
+  Buffer a;
+  Buffer b{"b"};
+  Buffer c{"c"};
+  a.concat(b);
+  a.concat(c);
+
+  EXPECT_EQ(a.str_view(), "bc");
+}
+
 TEST(Buffer, ConcatOperator)
 {
   Buffer a{"foo"};

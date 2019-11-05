@@ -57,6 +57,11 @@ public:
    */
   const HttpRequest &get_parsed_request() const;
 
+  /**
+   * \brief Reset the parser.
+   */
+  void reset();
+
 private:
   /**
    * The request as parsed so far by the parser.

@@ -6,6 +6,7 @@
 
 #include <errno.h>
 #include <sys/epoll.h>
+#include <iostream>
 
 namespace microloop
 {

@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <string>
 #include <sys/socket.h>
+#include <filesystem>
 
 namespace microloop::net
 {
@@ -35,10 +36,17 @@ public:
     /**
      * Send a buffer to the peer socket of this connection.
      * @param  buf The buffer to be sent to the peer socket.
-     * @return Whether the operation succeeded or not. If only a fractino of the entire buffer is
+     * @return Whether the operation succeeded or not. If only a fraction of the entire buffer is
      * sent, then the functino will report it as a failure.
      */
     bool send(const microloop::Buffer &);
+
+    /**
+     * Send the file identified by \p path parameter to the peer socket of this connection.
+     * \param path The path in a reachable file system for the file to be sent.
+     * \return Whether the operaiton succeeded or not.
+     */
+    bool send_file(const std::filesystem::path &path);
   };
 
   using ConnectionHandler = std::function<void(PeerConnection &)>;

@@ -8,6 +8,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 
 using namespace microloop;
 
@@ -24,9 +25,13 @@ void on_data(net::TcpServer::PeerConnection &conn, const microloop::Buffer &buf)
     return;
   }
 
-  std::cout << "Received: " << static_cast<char *>(buf.data()) << "\n";
+  std::cout << "Received: " << buf.str_view() << "\n";
 
-  conn.send("goodbye.\n");
+  std::ostringstream ss{"You wrote: "};
+  ss << buf.str_view() << std::endl << "Goodbye\n";
+
+  conn.send(microloop::Buffer(ss.str().c_str()));
+  conn.close();
 }
 
 int main(int argc, char **argv)

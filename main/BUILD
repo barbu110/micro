@@ -7,9 +7,27 @@ cc_binary(
 )
 
 cc_binary(
+  name = "static_server",
+  srcs = ["static_server.cpp"],
+  deps = [
+    "//lib/microhttp:microhttp",
+    "//lib/microloop:microloop",
+  ],
+)
+
+cc_binary(
   name = "request_parser_example",
   srcs = ["request_parser_example.cpp"],
   deps = [
     "//lib/microhttp:microhttp",
+    "//lib/microloop:microloop",
+  ],
+)
+
+cc_binary(
+  name = "buffer",
+  srcs = ["buffer.cpp"],
+  deps = [
+    "//lib/microloop:microloop",
   ],
 )

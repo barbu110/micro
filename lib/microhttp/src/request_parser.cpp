@@ -115,4 +115,11 @@ HttpRequest &RequestParser::get_parsed_request()
   return request;
 }
 
+void RequestParser::reset()
+{
+  state = WAITING_START_LINE;
+  request = HttpRequest{};
+  next_unit.clear();
+}
+
 }  // namespace microhttp::http

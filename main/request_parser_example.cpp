@@ -3,6 +3,7 @@
 //
 
 #include "microhttp/request_parser.h"
+#include "microloop/buffer.h"
 
 #include <vector>
 #include <string>
@@ -13,17 +14,17 @@ int main()
   using std::cout;
   using std::endl;
 
-  std::vector<const char *> chunks = {
+  std::vector<microloop::Buffer> chunks = {
     "POST /foo HTTP/1.1\r\n",
     "Content-Length: 7\r\n\r\n",
-    "example"
+    "example",
   };
 
   microhttp::http::RequestParser parser{};
 
   for (const auto &chunk : chunks)
   {
-    cout << "Chunk: " << chunk << endl;
+    cout << "Chunk: " << chunk.str_view() << endl;
 
     parser.add_chunk(chunk);
   }

@@ -75,7 +75,7 @@ std::vector<RequestTestProvider> request_parser_provider()
     std::vector<microloop::Buffer> chunks = {
       "POST /foo HTTP/1.1\r\n",
       "Content-Length: 7\r\n\r\n",
-      "example",
+      "example"
     };
 
     HttpRequest expected_request{"post", "/foo"};

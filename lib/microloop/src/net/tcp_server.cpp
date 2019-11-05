@@ -11,6 +11,12 @@
 #include <netdb.h>
 #include <sstream>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
 
 namespace microloop::net
 {
@@ -44,6 +50,25 @@ bool TcpServer::PeerConnection::send(const microloop::Buffer &buf)
 
     total_sent += nsent;
   }
+
+  return true;
+}
+
+bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
+{
+  auto read_fd = open(path.c_str(), O_RDONLY);
+  if (read_fd == -1)
+  {
+    return false;
+  }
+
+  struct stat stat_buf{};
+  off_t offset = 0;
+
+  fstat(read_fd, &stat_buf);
+
+  sendfile(fd, read_fd, &offset, stat_buf.st_size);
+  ::close(read_fd);
 
   return true;
 }
