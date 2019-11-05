@@ -66,7 +66,7 @@ std::optional<HeaderLineData> RFC7230::parse_header_line(std::string_view sv) no
 
   sv.remove_suffix(2);  // remove the CRLF token
 
-  std::vector<std::string_view> parts = absl::StrSplit(sv, ':');
+  std::vector<std::string_view> parts = absl::StrSplit(sv, absl::MaxSplits(':', 1));
   if (parts.size() != 2)
   {
     return std::nullopt;  // does not respect the "Name: Value" format

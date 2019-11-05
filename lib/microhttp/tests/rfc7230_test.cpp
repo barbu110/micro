@@ -83,6 +83,7 @@ INSTANTIATE_TEST_CASE_P(RFC7230, HeaderLineTest,
         std::make_tuple("name: value\r\n", HeaderLineData{"name", "value"}),  // valid
         std::make_tuple("Header-Name: some value\r\n", HeaderLineData{"Header-Name", "some value"}),
         std::make_tuple("Name:     value   \r\n", HeaderLineData{"Name", "value"}),
+        std::make_tuple("Host: localhost:5000\r\n", HeaderLineData{"Host", "localhost:5000"}),
         std::make_tuple("name: \r\n", HeaderLineData{"name", ""}),  // empty value
         std::make_tuple("name:\r\n", HeaderLineData{"name", ""}),  // also empty value
         std::make_tuple("Name: value", std::nullopt),  // no CRLF
