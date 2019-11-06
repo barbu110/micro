@@ -15,6 +15,10 @@ class KernelException : public std::runtime_error
 public:
   explicit KernelException(int err) : std::runtime_error{strerror(err)}
   {}
+
+  KernelException(int err, const char *caller) :
+      std::runtime_error{std::string(caller) + ": " + std::string(strerror(err))}
+  {}
 };
 
 }  // namespace microloop
