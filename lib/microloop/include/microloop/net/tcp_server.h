@@ -24,9 +24,18 @@ class TcpServer
 public:
   struct PeerConnection
   {
+  private:
+    bool closed_ = false;
+
+  public:
     TcpServer *server;
     sockaddr_storage addr;
+    socklen_t addrlen;
     std::uint32_t fd;
+
+    PeerConnection(TcpServer *server, sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
+        server{server}, addr{addr}, addrlen{addrlen}, fd{fd}
+    {}
 
     /**
      * Close this connection.
@@ -47,6 +56,12 @@ public:
      * \return Whether the operaiton succeeded or not.
      */
     bool send_file(const std::filesystem::path &path);
+
+    /**
+     * \brief Get a string representation of this peer connection. The representation will contain
+     * a pretty representation of the socket address.
+     */
+    std::string str() const;
   };
 
   using ConnectionHandler = std::function<void(PeerConnection &)>;

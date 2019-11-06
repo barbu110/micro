@@ -8,25 +8,33 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <sstream>
 #include <stdexcept>
-#include <sys/stat.h>
-#include <sys/sendfile.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <sys/sendfile.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace microloop::net
 {
 
 void TcpServer::PeerConnection::close()
 {
+  if (closed_)
+  {
+    return;
+  }
+
   if (::close(fd) == -1)
   {
-    throw microloop::KernelException(errno);
+    throw microloop::KernelException(errno, __PRETTY_FUNCTION__);
   }
+
+  closed_ = true;
 
   server->peer_connections.erase(fd);
 }
@@ -62,7 +70,8 @@ bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
     return false;
   }
 
-  struct stat stat_buf{};
+  struct stat stat_buf
+  {};
   off_t offset = 0;
 
   fstat(read_fd, &stat_buf);
@@ -71,6 +80,29 @@ bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
   ::close(read_fd);
 
   return true;
+}
+
+std::string TcpServer::PeerConnection::str() const
+{
+  static constexpr std::size_t port_strlen = 8;
+
+  char hostbuf[INET6_ADDRSTRLEN]{};
+  char portbuf[port_strlen]{};
+
+  auto err_code = getnameinfo(reinterpret_cast<const sockaddr *>(&addr), addrlen, hostbuf,
+      sizeof(hostbuf), portbuf, sizeof(portbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+  if (err_code != 0)
+  {
+    std::stringstream err;
+    err << __PRETTY_FUNCTION__ << ": " << gai_strerror(err_code);
+
+    throw std::runtime_error(err.str());
+  }
+
+  std::stringstream address;
+  address << hostbuf << " " << portbuf << " - " << fd;
+
+  return address.str();
 }
 
 TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
@@ -166,7 +198,7 @@ void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, sockl
   using microloop::event_sources::net::Receive;
   using namespace std::placeholders;
 
-  PeerConnection conn{this, addr, fd};
+  PeerConnection conn{this, addr, addrlen, fd};
   peer_connections.emplace(fd, conn);
 
   auto bound_on_data = std::bind(on_data, conn, _1);
