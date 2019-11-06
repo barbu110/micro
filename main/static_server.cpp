@@ -2,23 +2,23 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "microloop/net/tcp_server.h"
 #include "microhttp/request_parser.h"
+#include "microloop/net/tcp_server.h"
 
+#include <chrono>
+#include <errno.h>
+#include <fcntl.h>
+#include <functional>
 #include <iostream>
 #include <limits>
-#include <stdexcept>
-#include <string>
-#include <sstream>
 #include <map>
-#include <functional>
+#include <sstream>
+#include <stdexcept>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
+#include <string>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <chrono>
 
 using namespace microloop;
 
@@ -54,15 +54,18 @@ struct BasicHttpServer
     auto &parser = clients_[conn.fd];
     parser.add_chunk(buf);
 
-    const auto &request = parser.get_parsed_request();
-    std::cout << "[" << request.get_http_method() << "] " << request.get_uri() << " ";
+    conn.send(
+        "HTTP/1.1 200 OK\r\nServer: microhttp/0.9\r\nContent-Length: "
+        "167\r\n\r\n<html><head><title>Micro Server</title></head><body><h1>Micro HTTP</h1><p>This "
+        "is the <code>microhttp</code> framework powered by <code>microloop</code>.</body></html>");
 
-    conn.send("HTTP/1.1 200 OK\r\nServer: microhttp/0.9\r\nContent-Length: 167\r\n\r\n<html><head><title>Micro Server</title></head><body><h1>Micro HTTP</h1><p>This is the <code>microhttp</code> framework powered by <code>microloop</code>.</body></html>");
-    conn.close();
+    const auto &request = parser.get_parsed_request();
 
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> dur_ms{t2 - t1};
-    std::cout << "- " << dur_ms.count() << "ms\n";
+
+    std::cout << "[" << conn.str() << "] " << request.get_http_method() << " " << request.get_uri()
+              << "- " << dur_ms.count() << "ms\n";
 
     clients_[conn.fd].reset();
   }
