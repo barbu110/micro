@@ -26,10 +26,10 @@ EventLoop::EventLoop() : thread_pool{4}
   signals_monitor_fd_ = signals_monitor->get_fd();
 }
 
-EventLoop &EventLoop::get_main()
+EventLoop &EventLoop::instance()
 {
-  static EventLoop instance;
-  return instance;
+  static EventLoop instance_;
+  return instance_;
 }
 
 void EventLoop::add_event_source(EventSource *event_source)

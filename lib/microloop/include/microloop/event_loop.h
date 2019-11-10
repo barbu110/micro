@@ -28,7 +28,7 @@ public:
   /**
    * @return An instance of the event loop.
    */
-  static EventLoop &get_main();
+  static EventLoop &instance();
 
   EventLoop(const EventLoop &) = delete;
   EventLoop &operator=(const EventLoop &) = delete;
@@ -91,4 +91,4 @@ private:
 
 }  // namespace microloop
 
-#define MICROLOOP_TICK() microloop::EventLoop::get_main().next_tick()
+#define MICROLOOP_TICK() microloop::EventLoop::instance().next_tick()

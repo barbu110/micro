@@ -105,9 +105,9 @@ TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
   server_fd = create_passive_socket(port);
 
   auto connection_handler = std::bind(&TcpServer::handle_connection, this, _1, _2, _3);
-  EventLoop::get_main().add_event_source(new AwaitConnections(server_fd, connection_handler));
+  EventLoop::instance().add_event_source(new AwaitConnections(server_fd, connection_handler));
 
-  microloop::EventLoop::get_main().register_signal_handler(SIGINT, [](std::uint32_t) {
+  microloop::EventLoop::instance().register_signal_handler(SIGINT, [](std::uint32_t) {
     /*
      * This is here just to allow the application to exit smoothly, performing stack unwinding and
      * every other avaiable clean up.
@@ -199,7 +199,7 @@ void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, sockl
     throw std::runtime_error("a connection with the same file descriptor already exists");
   }
 
-  EventLoop::get_main().add_event_source(
+  EventLoop::instance().add_event_source(
       new Receive<false>(fd, std::bind(on_data, it->second, _1)));
 
   on_conn(it->second);
