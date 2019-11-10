@@ -72,10 +72,8 @@ struct BasicHttpServer
 
   void run()
   {
-    while (true)
-    {
-      MICROLOOP_TICK();
-    }
+    while (MICROLOOP_TICK())
+      ;
   }
 };
 
@@ -93,6 +91,6 @@ int main(int argc, char **argv)
     throw std::range_error("invalid port");
   }
 
-  BasicHttpServer server{port};
+  static BasicHttpServer server{port};
   server.run();
 }

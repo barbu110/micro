@@ -9,12 +9,12 @@
 #include "microloop/event_sources/net/receive.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <signal.h>
 #include <string>
 #include <sys/socket.h>
-#include <filesystem>
 
 namespace microloop::net
 {
@@ -24,18 +24,18 @@ class TcpServer
 public:
   struct PeerConnection
   {
-  private:
-    bool closed_ = false;
-
-  public:
     TcpServer *server;
     sockaddr_storage addr;
     socklen_t addrlen;
     std::uint32_t fd;
 
-    PeerConnection(TcpServer *server, sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
-        server{server}, addr{addr}, addrlen{addrlen}, fd{fd}
+    PeerConnection(sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
+        addr{addr},
+        addrlen{addrlen},
+        fd{fd}
     {}
+
+    // PeerConnection does not have a destructor due to its shared ownership of the file descriptor.
 
     /**
      * Close this connection.
@@ -105,11 +105,6 @@ private:
    * @param addrlen The size of the address representation structure.
    */
   void handle_connection(std::uint32_t fd, sockaddr_storage addr, socklen_t addrlen);
-
-  /**
-   * Destroys the TCP passive socket and all the active connections.
-   */
-  void destroy();
 
 private:
   std::uint16_t port;

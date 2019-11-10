@@ -10,7 +10,7 @@
 namespace microloop::utils
 {
 
-ThreadPool::ThreadPool(std::uint32_t threads_count) : done{false}
+ThreadPool::ThreadPool(std::uint32_t threads_count)
 {
   if (!threads_count)
   {
@@ -48,33 +48,24 @@ void ThreadPool::worker()
     throw microloop::KernelException(errno);
   }
 
-  while (!done)
+  while (!done_)
   {
-    std::unique_lock<std::mutex> lock{mtx};
-    cond.wait(lock, [&] { return !jobs.empty(); });
-
-    auto curr_job = std::move(jobs.front());
-    jobs.pop();
-
-    lock.unlock();
-    cond.notify_one();
-
-    curr_job->run();
+    auto &&curr_job = jobs.wait_pop();
+    if (curr_job.has_value())
+    {
+      /*
+       * Note that we dereference the std::optional first so we can be able to access the
+       * std::unique_ptr contained within.
+       */
+      (*curr_job)->run();
+    }
   }
 }
 
 void ThreadPool::destroy()
 {
-  done = true;
-
-  std::unique_lock<std::mutex> lock{mtx};
-  while (!jobs.empty())
-  {
-    jobs.pop();
-  }
-
-  lock.unlock();
-  cond.notify_all();
+  done_ = true;
+  jobs.invalidate();
 
   for (auto &thread : threads)
   {
@@ -83,6 +74,8 @@ void ThreadPool::destroy()
       thread.join();
     }
   }
+
+  threads.clear();
 }
 
 }  // namespace microloop::utils

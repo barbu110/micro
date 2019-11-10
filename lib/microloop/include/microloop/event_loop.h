@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <unistd.h>
 
 namespace microloop
@@ -17,6 +18,7 @@ namespace microloop
 
 class EventLoop
 {
+private:
   /**
    * Create an instance of the event loop. The thread pool is initialized with 4 threads by default.
    */
@@ -26,7 +28,10 @@ public:
   /**
    * @return An instance of the event loop.
    */
-  static EventLoop *get_main();
+  static EventLoop &get_main();
+
+  EventLoop(const EventLoop &) = delete;
+  EventLoop &operator=(const EventLoop &) = delete;
 
   /**
    * @return The embedded thread pool.
@@ -56,7 +61,7 @@ public:
    */
   inline void register_signal_handler(std::uint32_t sig, SignalsMonitor::SignalHandler &&callback)
   {
-    signals_monitor.register_signal_handler(sig, std::move(callback));
+    signals_monitor().register_signal_handler(sig, std::move(callback));
   }
 
   /**
@@ -73,14 +78,17 @@ public:
   }
 
 private:
+  SignalsMonitor &signals_monitor()
+  {
+    return *static_cast<SignalsMonitor *>(event_sources[signals_monitor_fd_].get());
+  }
+
   std::uint32_t epollfd;
   utils::ThreadPool thread_pool;
-  SignalsMonitor signals_monitor;
-  std::map<std::uint64_t, EventSource *> event_sources;
-
-  static EventLoop *main_instance;
+  std::uint64_t signals_monitor_fd_;
+  std::map<std::uint64_t, std::unique_ptr<EventSource>> event_sources;
 };
 
 }  // namespace microloop
 
-#define MICROLOOP_TICK() microloop::EventLoop::get_main()->next_tick()
+#define MICROLOOP_TICK() microloop::EventLoop::get_main().next_tick()

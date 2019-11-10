@@ -25,6 +25,9 @@ class ThreadPool
   public:
     using Func = std::function<void()>;
 
+    Job(const Job &) = delete;
+    Job &operator=(const Job &) = delete;
+
     Job(Func &&fn) : fn{fn}
     {}
 
@@ -33,8 +36,97 @@ class ThreadPool
       fn();
     }
 
+    virtual ~Job()
+    {
+      /*
+       * This virtual destructor has been added in order for Valgrind not to complain.
+       * TODO Find out why it works, although there is no class inheriting from Job.
+       */
+    }
+
   private:
     Func fn;
+  };
+
+  template <class JobType>
+  class JobsQueue
+  {
+  public:
+    ~JobsQueue()
+    {
+      invalidate();
+    }
+
+    std::optional<JobType> try_pop()
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      if (queue_.empty() || !valid_)
+      {
+        return std::nullopt;
+      }
+
+      return std::move(queue_.front());
+      queue_.pop();
+    }
+
+    std::optional<JobType> wait_pop()
+    {
+      std::unique_lock<std::mutex> lock{mutex_};
+      condition_.wait(lock, [&] { return !queue_.empty() || !valid_; });
+
+      if (!valid_)
+      {
+        return std::nullopt;
+      }
+
+      auto elem = std::move(queue_.front());
+      queue_.pop();
+
+      return std::make_optional(std::move(elem));
+    }
+
+    void push(JobType &&job)
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      queue_.push(std::move(job));
+      condition_.notify_one();
+    }
+
+    bool empty() const
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      return queue_.empty();
+    }
+
+    void clear()
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      while (!queue_.empty())
+      {
+        queue_.pop();
+      }
+
+      condition_.notify_all();
+    }
+
+    void invalidate()
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      valid_ = false;
+      condition_.notify_all();
+    }
+
+    bool valid() const
+    {
+      std::lock_guard<std::mutex> lock{mutex_};
+      return valid_;
+    }
+
+  private:
+    std::atomic_bool valid_{true};
+    mutable std::mutex mutex_;
+    std::queue<JobType> queue_;
+    std::condition_variable condition_;
   };
 
 public:
@@ -46,6 +138,9 @@ public:
    */
   ThreadPool(std::uint32_t threads_count);
 
+  ThreadPool(const ThreadPool &other) = delete;
+  ThreadPool &operator=(const ThreadPool &other) = delete;
+
   /**
    * Submit a new job to the thread pool. Note that the thread pool is not responsible for
    * processing the results of the job function.
@@ -56,20 +151,18 @@ public:
   void submit(Func &&fn, Args &&... args)
   {
     auto bound_fn = std::bind(std::forward<Func>(fn), std::forward<Args>(args)...);
-
-    Job job{std::move(bound_fn)};
-
-    std::unique_lock<std::mutex> lock{mtx};
-    jobs.push(std::make_unique<Job>(std::move(job)));
-
-    lock.unlock();
-    cond.notify_one();
+    jobs.push(std::make_unique<Job>(std::move(bound_fn)));
   }
 
   /**
    * Close the thread pool.
    */
   void close()
+  {
+    destroy();
+  }
+
+  ~ThreadPool()
   {
     destroy();
   }
@@ -91,21 +184,14 @@ private:
   /**
    * Vector of created threads.
    */
-  std::vector<std::thread> threads;
-
-  /**
-   * Whether the threadpool is done or not. When this is true, the threads are automatically
-   * closed.
-   */
-  std::atomic_bool done;
+  std::vector<std::thread> threads{};
 
   /**
    * Jobs to be executed by worker threads.
    */
-  std::queue<std::unique_ptr<Job>> jobs;
+  JobsQueue<std::unique_ptr<Job>> jobs{};
 
-  mutable std::mutex mtx;
-  std::condition_variable cond;
+  std::atomic_bool done_ = false;
 };
 
 }  // namespace microloop::utils

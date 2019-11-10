@@ -5,7 +5,6 @@
 #include "microhttp/version.h"
 
 #include <cctype>
-#include <iostream>
 #include <sstream>
 
 namespace microhttp::http

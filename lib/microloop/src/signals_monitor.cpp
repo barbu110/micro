@@ -6,6 +6,7 @@
 
 #include "microloop/kernel_exception.h"
 
+#include <cstdlib>
 #include <signal.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
@@ -16,6 +17,8 @@ namespace microloop
 SignalsMonitor::SignalsMonitor() : EventSource{0}
 {
   sigemptyset(&initial_sigset);
+  sigemptyset(&curr_sigset);
+
   if (sigprocmask(SIG_SETMASK, nullptr, &initial_sigset) == -1)
   {
     throw microloop::KernelException(errno);
@@ -53,22 +56,16 @@ void SignalsMonitor::run_callback()
     throw microloop::KernelException(errno);
   }
 
-  bool can_exit = true;
+  can_exit_ = true;
+
   std::uint32_t signo = info.ssi_signo;
   for (const auto &fn : signal_handlers[signo])
   {
     if (!fn(signo))
     {
-      can_exit = false;
+      can_exit_ = false;
+      break;
     }
-  }
-
-  if (can_exit)
-  {
-    /*
-     * TODO Find a way to have objects go out of scope and their destructors called before exiting.
-     */
-    _exit(signo);
   }
 }
 

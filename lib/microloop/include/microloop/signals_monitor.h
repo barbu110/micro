@@ -62,6 +62,15 @@ public:
     return curr_sigset;
   }
 
+  /**
+   * \brief Whether the application can exit or not after having caught and handled a signal.
+   * \return The \p can_exit_ internal flag.
+   */
+  bool can_exit() const
+  {
+    return can_exit_;
+  }
+
 private:
   /**
    * Block or unblock the given signal.
@@ -73,6 +82,12 @@ private:
   sigset_t initial_sigset;
   sigset_t curr_sigset;
   std::map<std::uint32_t, std::vector<SignalHandler>> signal_handlers;
+
+  /**
+   * Flag that will be used to indicate whether the application can exit or not after a signal is
+   * caught and handled.
+   */
+  mutable bool can_exit_ = false;
 };
 
 }  // namespace microloop

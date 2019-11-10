@@ -24,19 +24,10 @@ namespace microloop::net
 
 void TcpServer::PeerConnection::close()
 {
-  if (closed_)
-  {
-    return;
-  }
-
   if (::close(fd) == -1)
   {
     throw microloop::KernelException(errno, __PRETTY_FUNCTION__);
   }
-
-  closed_ = true;
-
-  server->peer_connections.erase(fd);
 }
 
 bool TcpServer::PeerConnection::send(const microloop::Buffer &buf)
@@ -114,17 +105,20 @@ TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
   server_fd = create_passive_socket(port);
 
   auto connection_handler = std::bind(&TcpServer::handle_connection, this, _1, _2, _3);
-  EventLoop::get_main()->add_event_source(new AwaitConnections(server_fd, connection_handler));
+  EventLoop::get_main().add_event_source(new AwaitConnections(server_fd, connection_handler));
 
-  microloop::EventLoop::get_main()->register_signal_handler(SIGINT, [&](std::uint32_t) {
-    destroy();
+  microloop::EventLoop::get_main().register_signal_handler(SIGINT, [](std::uint32_t) {
+    /*
+     * This is here just to allow the application to exit smoothly, performing stack unwinding and
+     * every other avaiable clean up.
+     */
     return true;
   });
 }
 
 TcpServer::~TcpServer()
 {
-  destroy();
+  ::close(server_fd);
 }
 
 std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
@@ -139,7 +133,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
   if (err_code != 0)
   {
     std::stringstream err;
-    err << __FUNCTION__ << ": " << gai_strerror(err_code);
+    err << __PRETTY_FUNCTION__ << ": " << gai_strerror(err_code);
 
     throw std::runtime_error(err.str());
   }
@@ -158,7 +152,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1)
     {
       std::stringstream err;
-      err << __FUNCTION__ << ": " << microloop::utils::error::strerror(errno);
+      err << __PRETTY_FUNCTION__ << ": " << microloop::utils::error::strerror(errno);
 
       throw std::runtime_error(err.str());
     }
@@ -177,7 +171,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
   if (r == nullptr)
   {
     std::stringstream err;
-    err << __FUNCTION__ << ": "
+    err << __PRETTY_FUNCTION__ << ": "
         << "Failed to bind to port " << port;
 
     throw std::runtime_error(err.str());
@@ -195,26 +189,20 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
 
 void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, socklen_t addrlen)
 {
+  using microloop::EventLoop;
   using microloop::event_sources::net::Receive;
   using namespace std::placeholders;
 
-  PeerConnection conn{this, addr, addrlen, fd};
-  peer_connections.emplace(fd, conn);
-
-  auto bound_on_data = std::bind(on_data, conn, _1);
-  microloop::EventLoop::get_main()->add_event_source(new Receive<false>(fd, bound_on_data));
-
-  on_conn(conn);
-}
-
-void TcpServer::destroy()
-{
-  for (auto &it : peer_connections)
+  auto [it, inserted] = peer_connections.try_emplace(fd, addr, addrlen, fd);
+  if (!inserted)
   {
-    it.second.close();
+    throw std::runtime_error("a connection with the same file descriptor already exists");
   }
 
-  close(server_fd);
+  EventLoop::get_main().add_event_source(
+      new Receive<false>(fd, std::bind(on_data, it->second, _1)));
+
+  on_conn(it->second);
 }
 
 }  // namespace microloop::net

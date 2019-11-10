@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <string_view>
-#include <iostream>
 
 namespace microhttp::http
 {

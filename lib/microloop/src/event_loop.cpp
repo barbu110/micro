@@ -6,12 +6,9 @@
 
 #include <errno.h>
 #include <sys/epoll.h>
-#include <iostream>
 
 namespace microloop
 {
-
-EventLoop *EventLoop::main_instance = nullptr;
 
 EventLoop::EventLoop() : thread_pool{4}
 {
@@ -23,17 +20,16 @@ EventLoop::EventLoop() : thread_pool{4}
 
   epollfd = epoll_create(1);
 
-  add_event_source(&signals_monitor);
+  auto signals_monitor = new SignalsMonitor();
+  add_event_source(signals_monitor);
+
+  signals_monitor_fd_ = signals_monitor->get_fd();
 }
 
-EventLoop *EventLoop::get_main()
+EventLoop &EventLoop::get_main()
 {
-  if (main_instance == nullptr)
-  {
-    main_instance = new EventLoop;
-  }
-
-  return main_instance;
+  static EventLoop instance;
+  return instance;
 }
 
 void EventLoop::add_event_source(EventSource *event_source)
@@ -55,8 +51,7 @@ void EventLoop::add_event_source(EventSource *event_source)
     throw KernelException(errno);
   }
 
-  event_sources[fd]
-      = event_source;  // TODO Do we still need storing event soucres in the hashtable?
+  event_sources[fd] = std::unique_ptr<EventSource>{event_source};
 
   if (event_source->native_async())
   {
@@ -81,9 +76,9 @@ void EventLoop::remove_event_source(EventSource *event_source)
 
 bool EventLoop::next_tick()
 {
-  epoll_event events_list[32];
+  epoll_event events_list[32]{};
 
-  auto ready = epoll_pwait(epollfd, events_list, 32, -1, &signals_monitor.get_sigmask());
+  auto ready = epoll_pwait(epollfd, events_list, 32, -1, &signals_monitor().get_sigmask());
   if (ready < 0)
   {
     return false;
@@ -106,9 +101,17 @@ bool EventLoop::next_tick()
      */
     event_source->run_callback();
 
+    if (event_source->get_fd() == signals_monitor_fd_)
+    {
+      if (signals_monitor().can_exit())
+      {
+        return false;
+      }
+    }
+
     if (delete_event_source)
     {
-      delete event_source;
+      event_sources.erase(event_source->get_fd());
     }
   }
 
