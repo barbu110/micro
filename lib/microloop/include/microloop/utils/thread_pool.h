@@ -15,6 +15,10 @@
 #include <queue>
 #include <thread>
 
+#ifndef THREADPOOL_MAX_WORKERS
+#define THREADPOOL_MAX_WORKERS (std::thread::hardware_concurrency() - 1)
+#endif
+
 namespace microloop::utils
 {
 
@@ -124,7 +128,18 @@ class ThreadPool
     std::condition_variable condition_;
   };
 
+  static constexpr char *MAX_WORKERS_ENV_VAR = "MICRO_MAX_WORKERS";
+
 public:
+  /**
+   * \brief Constructs a thread pool deciding the number of threads to spawn based on the following,
+   * in order:
+   *  1) The environment variable "MICRO_MAX_WORKERS",
+   *  2) The compile-time define "THREADPOOL_MAX_WORKERS",
+   *  3) The maximum hardware supported threads.
+   */
+  ThreadPool();
+
   /**
    * Constructs the thread pool with the given number of threads.
    * @param threads_count How many threads to spawn. If this number exceeds the number of physical

@@ -6,18 +6,32 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <cstdlib>
+#include <charconv>
+#include <iostream>
 
 namespace microloop::utils
 {
 
-ThreadPool::ThreadPool(std::uint32_t threads_count)
+
+ThreadPool::ThreadPool()
 {
-  if (!threads_count)
+  std::uint32_t threads_count = 0;
+  if (const char *val = std::getenv(MAX_WORKERS_ENV_VAR); val != nullptr)
   {
-    throw std::invalid_argument("threads_count must be at least 1");
+    std::from_chars(val, val + std::strlen(val) + 1, threads_count);
   }
 
-  threads_count = std::min(std::thread::hardware_concurrency() - 1, threads_count);
+  if (!threads_count)
+  {
+    threads_count = THREADPOOL_MAX_WORKERS;
+  }
+  else
+  {
+    threads_count = std::min(threads_count, std::thread::hardware_concurrency() - 1);
+  }
+
+  std::cout << "Spawning workers: " << threads_count << "\n";
 
   try
   {

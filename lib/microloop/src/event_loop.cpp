@@ -10,7 +10,7 @@
 namespace microloop
 {
 
-EventLoop::EventLoop() : thread_pool{4}
+EventLoop::EventLoop()
 {
   epollfd = epoll_create(1);
   if (epollfd == -1)
