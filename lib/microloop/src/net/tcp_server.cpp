@@ -96,13 +96,13 @@ std::string TcpServer::PeerConnection::str() const
   return address.str();
 }
 
-TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
+TcpServer::TcpServer(std::uint16_t port) : port{port}
 {
   using namespace std::placeholders;
   using microloop::EventLoop;
   using microloop::event_sources::net::AwaitConnections;
 
-  server_fd = create_passive_socket(port);
+  auto server_fd = create_passive_socket(port);
 
   auto connection_handler = std::bind(&TcpServer::handle_connection, this, _1, _2, _3);
   EventLoop::instance().add_event_source(new AwaitConnections(server_fd, connection_handler));
@@ -114,11 +114,6 @@ TcpServer::TcpServer(std::uint16_t port) : port{port}, server_fd{0}
      */
     return true;
   });
-}
-
-TcpServer::~TcpServer()
-{
-  ::close(server_fd);
 }
 
 std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)

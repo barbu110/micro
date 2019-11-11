@@ -30,9 +30,7 @@ public:
     std::uint32_t fd;
 
     PeerConnection(sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
-        addr{addr},
-        addrlen{addrlen},
-        fd{fd}
+        addr{addr}, addrlen{addrlen}, fd{fd}
     {}
 
     // PeerConnection does not have a destructor due to its shared ownership of the file descriptor.
@@ -69,7 +67,6 @@ public:
 
 public:
   TcpServer(std::uint16_t port);
-  ~TcpServer();
 
   template <class Func, class... Args>
   void set_connection_callback(Func &&func, Args &&... args)
@@ -108,7 +105,6 @@ private:
 
 private:
   std::uint16_t port;
-  std::uint32_t server_fd;
 
   std::map<std::uint32_t, PeerConnection> peer_connections;
 
