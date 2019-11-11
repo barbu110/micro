@@ -9,10 +9,11 @@
 #include "microloop/utils/thread_pool.h"
 
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <unistd.h>
-#include <iostream>
 
 namespace microloop
 {
@@ -75,9 +76,19 @@ public:
 
   ~EventLoop()
   {
-    if (auto err = close(epollfd); err != 0)
+    for (auto &[fd, event_source] : event_sources)
     {
-      std::cerr << "Failed to close socket. (" << __FILE__ << ":" << __LINE__ << ").\n";
+      if (auto status = ::close(fd); status != 0)
+      {
+        std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Cannot close FD " << fd << ": "
+                  << ::strerror(errno) << "\n";
+      }
+    }
+
+    if (auto status = ::close(epollfd); status != 0)
+    {
+      std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Cannot close Epoll FD " << epollfd
+                << ": " << ::strerror(errno) << "\n";
     }
   }
 
