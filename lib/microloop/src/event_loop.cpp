@@ -12,13 +12,11 @@ namespace microloop
 
 EventLoop::EventLoop() : thread_pool{4}
 {
-  std::int32_t fd = epoll_create(1);
-  if (fd == -1)
+  epollfd = epoll_create(1);
+  if (epollfd == -1)
   {
     throw KernelException(errno);
   }
-
-  epollfd = epoll_create(1);
 
   auto signals_monitor = new SignalsMonitor();
   add_event_source(signals_monitor);
