@@ -37,12 +37,7 @@ class ThreadPool
     }
 
     ~Job()
-    {
-      /*
-       * This virtual destructor has been added in order for Valgrind not to complain.
-       * TODO Find out why it works, although there is no class inheriting from Job.
-       */
-    }
+    {}
 
   private:
     Func fn;
