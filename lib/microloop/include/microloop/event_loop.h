@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <unistd.h>
+#include <iostream>
 
 namespace microloop
 {
@@ -74,7 +75,10 @@ public:
 
   ~EventLoop()
   {
-    close(epollfd);
+    if (auto err = close(epollfd); err != 0)
+    {
+      std::cerr << "Failed to close socket. (" << __FILE__ << ":" << __LINE__ << ").\n";
+    }
   }
 
 private:
