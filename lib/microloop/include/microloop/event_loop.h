@@ -98,7 +98,7 @@ private:
     return *static_cast<SignalsMonitor *>(event_sources[signals_monitor_fd_].get());
   }
 
-  std::uint32_t epollfd;
+  std::int32_t epollfd;
   utils::ThreadPool thread_pool;
   std::uint64_t signals_monitor_fd_;
   std::map<std::uint64_t, std::unique_ptr<EventSource>> event_sources;
