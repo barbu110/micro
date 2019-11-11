@@ -36,7 +36,7 @@ class ThreadPool
       fn();
     }
 
-    virtual ~Job()
+    ~Job()
     {
       /*
        * This virtual destructor has been added in order for Valgrind not to complain.

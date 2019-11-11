@@ -24,7 +24,6 @@ ThreadPool::ThreadPool(std::uint32_t threads_count)
     for (std::uint8_t i = 0; i != threads_count; ++i)
     {
       threads.emplace_back(&ThreadPool::worker, this);
-      threads.back().detach();
     }
   }
   catch (...)
