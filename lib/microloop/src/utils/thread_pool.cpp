@@ -8,11 +8,9 @@
 #include <signal.h>
 #include <cstdlib>
 #include <charconv>
-#include <iostream>
 
 namespace microloop::utils
 {
-
 
 ThreadPool::ThreadPool()
 {
@@ -30,8 +28,6 @@ ThreadPool::ThreadPool()
   {
     threads_count = std::min(threads_count, std::thread::hardware_concurrency() - 1);
   }
-
-  std::cout << "Spawning workers: " << threads_count << "\n";
 
   try
   {
