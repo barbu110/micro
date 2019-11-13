@@ -5,10 +5,15 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <string_view>
 
 namespace microhttp::http
 {
 
+/**
+ * \brief The HTTP status codes defined in RFC7231 and RFC7233.
+ */
 enum StatusCode : std::uint16_t
 {
   CONTINUE = 100,
@@ -54,7 +59,10 @@ enum StatusCode : std::uint16_t
   HTTP_VERSION_NOT_SUPPORTED = 505,
 };
 
-static const std::map<std::uint16_t, std::string> http_reason_phrases{
+/**
+ * \brief The mapping between HTTP status codes and reason phrases.
+ */
+static const std::map<std::uint16_t, std::string_view> http_reason_phrases{
   std::make_pair(StatusCode::CONTINUE, "Continue"),
   std::make_pair(StatusCode::SWITCHING_PROTOCOLS, "Switching Protocols"),
   std::make_pair(StatusCode::OK, "OK"),

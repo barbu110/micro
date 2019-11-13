@@ -4,6 +4,7 @@
 
 #include "microhttp/request_parser.h"
 #include "microloop/net/tcp_server.h"
+#include "microhttp/http_response.h"
 
 #include <chrono>
 #include <errno.h>
@@ -54,10 +55,14 @@ struct BasicHttpServer
     auto &parser = clients_[conn.fd];
     parser.add_chunk(buf);
 
-    conn.send(
-        "HTTP/1.1 200 OK\r\nServer: microhttp/0.9\r\nContent-Length: "
-        "167\r\n\r\n<html><head><title>Micro Server</title></head><body><h1>Micro HTTP</h1><p>This "
-        "is the <code>microhttp</code> framework powered by <code>microloop</code>.</body></html>");
+    microloop::Buffer content{
+        "<html><head><title>Micro Server</title></head><body><h1>Micro HTTP</h1><p>This is the "
+        "<code>microhttp</code> framework powered by <code>microloop</code>.</body></html>"};
+
+    microhttp::http::HttpResponse response{content};
+    response.set_header("Server", "microhttp");
+    response.set_header("Tag", 12);
+    conn.send(response.format<microloop::Buffer>());
 
     const auto &request = parser.get_parsed_request();
 
