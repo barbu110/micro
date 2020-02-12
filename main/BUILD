@@ -25,9 +25,10 @@ cc_binary(
 )
 
 cc_binary(
-  name = "buffer",
-  srcs = ["buffer.cpp"],
+  name = "playground",
+  srcs = ["playground.cpp"],
   deps = [
     "//lib/microloop:microloop",
+    "//lib/microhttp:microhttp",
   ],
 )
