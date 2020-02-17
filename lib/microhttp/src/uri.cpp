@@ -68,8 +68,32 @@ bool UriParser::parse_hier_part()
   if (sv_.substr(0, 2) == "//")
   {
     ignore(2);
-    parse_authority();
+    if (!parse_authority())
+    {
+      return false;
+    }
+
+    if (!parse_path_abempty())
+    {
+      return false;
+    }
   }
+  else if (!parse_path_absolute())
+  {
+    return false;
+  }
+  else if (!parse_path_noscheme())
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+
+  normalize_path();
+
+  return true;
 }
 
 bool UriParser::parse_authority()
@@ -323,6 +347,151 @@ std::optional<char> UriParser::parse_pct_encoded()
   }
 
   return static_cast<char>(decoded);
+}
+
+bool UriParser::parse_path_abempty()
+{
+  while (!eof())
+  {
+    if (curr() == '/')
+    {
+      uri_.path.push_back(consume());
+    }
+
+    if (!parse_segment())
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool UriParser::parse_path_absolute()
+{
+  if (curr() != '/')
+  {
+    return false;
+  }
+
+  uri_.path.push_back(consume());
+
+  if (!parse_segment(true))
+  {
+    return true;
+  }
+
+  while (!eof())
+  {
+    if (curr() == '/')
+    {
+      uri_.path.push_back(consume());
+    }
+
+    if (!parse_segment())
+    {
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool UriParser::parse_path_noscheme()
+{
+  if (!parse_segment(true, true))
+  {
+    return false;
+  }
+
+  while (!eof())
+  {
+    if (curr() == '/')
+    {
+      uri_.path.push_back(consume());
+    }
+
+    if (!parse_segment())
+    {
+      return true;
+    }
+  }
+
+  return true;
+}
+
+bool UriParser::parse_path_rootless()
+{
+  if (!parse_segment(true))
+  {
+    return false;
+  }
+
+  while (!eof())
+  {
+    if (curr() == '/')
+    {
+      uri_.path.push_back(consume());
+    }
+
+    if (!parse_segment())
+    {
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool UriParser::parse_segment(bool nz, bool nc)
+{
+  std::string segment;
+
+  if (auto c = parse_pct_encoded(); c)
+  {
+    segment.push_back(*c);
+  }
+  else if (is_pchar(curr()))
+  {
+    if (nc && curr() == ':')
+    {
+      error_ = Error::INVALID_PATH;
+      return false;
+    }
+
+    segment.push_back(consume());
+  }
+  else if (nz)
+  {
+    error_ = Error::INVALID_PATH;
+    return false;
+  }
+
+  while (true)
+  {
+    if (eof() || curr() == '/')
+    {
+      break;
+    }
+
+    if (auto c = parse_pct_encoded(); c)
+    {
+      segment.push_back(*c);
+    }
+    else if (is_pchar(curr()))
+    {
+      if (nc && curr() == ':')
+      {
+        error_ = Error::INVALID_PATH;
+        return false;
+      }
+
+      segment.push_back(consume());
+    }
+  }
+
+  uri_.path.append(segment);
+  return true;
 }
 
 char UriParser::peek() const

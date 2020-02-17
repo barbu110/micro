@@ -63,6 +63,7 @@ public:
     INVALID_IP_VERSION,
     INVALID_IPVFUTURE_ADDR,
     INVALID_PORT,
+    INVALID_PATH,
     INVALID_PCT_ENCODING,
   };
 
@@ -84,6 +85,11 @@ private:
   bool parse_ipvfuture();
   bool parse_reg_name();
   bool parse_port();
+  bool parse_path_abempty();
+  bool parse_path_absolute();
+  bool parse_path_noscheme();
+  bool parse_path_rootless();
+  bool parse_segment(bool nz = false, bool nc = false);
   bool parse_query();
   bool parse_fragment();
   std::optional<char> parse_pct_encoded();
@@ -147,6 +153,16 @@ private:
   static bool is_hexdigit(unsigned char c) noexcept
   {
     return std::isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+  }
+
+  static bool is_pchar(unsigned char c) noexcept
+  {
+    return is_unreserved(c) || is_sub_delim(c) || c == ':' || c == '@';
+  }
+
+  void normalize_path() noexcept
+  {
+
   }
 
   std::string_view sv_;
