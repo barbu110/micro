@@ -93,6 +93,8 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
 
       break;
     }
+    default:
+      __builtin_unreachable();
     }
 
     next_unit.remove_prefix(crlf_idx + constants::crlf_size);
