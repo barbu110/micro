@@ -40,3 +40,4 @@ SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeRangeBasedForLoopColon: true
 SpacesInContainerLiterals: false
+MaxEmptyLinesToKeep: 2
