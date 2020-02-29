@@ -3,31 +3,50 @@
 //
 
 #include "microloop/buffer.h"
-#include "microhttp/uri.h"
+#include "uri/uri.h"
 
 #include <iostream>
 #include <string>
 
-int main()
+int main(int argc, char **argv)
 {
-  std::cout << "Parsing..." << std::endl;
-
-  std::string uri{"ssh://victor%20barbu@[v8.6234bvw]:3306"};
-  microhttp::http::UriParser parser{};
-
-  auto parsed = parser.parse(uri);
-
-  if (!parsed)
+  auto uri_optional = micro::uri::from_string(std::string{argv[1]});
+  if (!uri_optional)
   {
-    std::cerr << "Failed with error: " << parser.error() << std::endl;
-    return 1;
+    std::cerr << "invalid uri\n";
+    return -1;
   }
 
-  std::cout << "Scheme: " << parsed->scheme << std::endl;
-  std::cout << "User information: " << parsed->userinfo << std::endl;
-  std::cout << "Host: " << parsed->host << std::endl;
-  std::cout << "Port: " << parsed->port << std::endl;
+  auto uri = *uri_optional;
 
+  if (uri.has_scheme())
+  {
+    std::cout << "scheme = " << uri.scheme() << std::endl;
+  }
+  if (uri.has_user_info())
+  {
+    std::cout << "user_info = " << uri.user_info() << std::endl;
+  }
+  if (uri.has_host_text())
+  {
+    std::cout << "host_text = " << uri.host_text() << std::endl;
+  }
+  if (uri.has_port_text())
+  {
+    std::cout << "port_text = " << uri.port_text() << std::endl;
+  }
+  if (uri.has_path())
+  {
+    std::cout << "path = " << uri.path() << std::endl;
+  }
+  if (uri.has_query())
+  {
+    std::cout << "query = " << uri.query() << std::endl;
+  }
+  if (uri.has_fragment())
+  {
+    std::cout << "fragment = " << uri.fragment() << std::endl;
+  }
 
   return 0;
 }

@@ -32,17 +32,6 @@ cc_test(
 )
 
 cc_test(
-  name = "uri",
-  timeout = "short",
-  srcs = ["uri_test.cpp"],
-  deps = [
-    "@gtest//:gtest",
-    "@gtest//:gtest_main",
-    "//lib/microhttp:microhttp",
-  ],
-)
-
-cc_test(
   name = "version",
   timeout = "short",
   srcs = ["version_test.cpp"],

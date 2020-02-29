@@ -30,5 +30,6 @@ cc_binary(
   deps = [
     "//lib/microloop:microloop",
     "//lib/microhttp:microhttp",
+    "//lib/uri:uri",
   ],
 )
