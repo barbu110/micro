@@ -7,12 +7,17 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <string_view>
 
 
 #define COMPONENT_F(type, name)                                                                    \
   bool has_##name() const noexcept                                                                 \
   {                                                                                                \
     return static_cast<bool>(name##_);                                                             \
+  }                                                                                                \
+  void name(type val)                                                                              \
+  {                                                                                                \
+    name##_ = val;                                                                                 \
   }                                                                                                \
   type name() const noexcept                                                                       \
   {                                                                                                \
@@ -36,6 +41,8 @@ namespace detail
   {
 
   public:
+    Uri() = default;
+
     Uri(optional<string> scheme, optional<string> user_info, optional<string> host_text,
         optional<string> port_text, optional<vector<string>> path_segments, optional<string> query,
         optional<string> fragment, bool absolute_path) :
@@ -69,10 +76,14 @@ namespace detail
 
     string path() const noexcept;
 
+    void path(std::string_view value);
+
     bool is_absolute_path() const noexcept
     {
       return absolute_path_;
     }
+
+    string to_string() const noexcept;
 
   private:
     COMPONENT(string, scheme);

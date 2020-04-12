@@ -5,6 +5,7 @@
 #include "uri/uri.h"
 
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "uriparser/Uri.h"
 
 namespace micro::uri::detail
@@ -17,7 +18,7 @@ static optional<string> from_range(UriTextRangeA range) noexcept
     return std::nullopt;
   }
 
-  return std::string(range.first, range.afterLast);
+  return std::string{range.first, range.afterLast};
 }
 
 static optional<vector<string>> from_path_list(UriPathSegmentA *head, UriPathSegmentA *tail)
@@ -71,6 +72,28 @@ std::string Uri::path() const noexcept
   }
 
   return absl::StrJoin(*path_segments_, "/");
+}
+
+void Uri::path(std::string_view value)
+{
+  if (value.empty())
+  {
+    path_segments_ = std::nullopt;
+  }
+
+  if (value.front() == '/')
+  {
+    absolute_path_ = true;
+
+    value.remove_prefix(1);
+  }
+
+  path_segments_ = absl::StrSplit(value, "/");
+}
+
+string Uri::to_string() const noexcept
+{
+  
 }
 
 }
