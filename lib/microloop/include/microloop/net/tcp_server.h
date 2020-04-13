@@ -58,8 +58,12 @@ public:
     /**
      * \brief Get a string representation of this peer connection. The representation will contain
      * a pretty representation of the socket address.
+     * \param include_fd Whether to include the file descriptor in the string representation. Having
+     * this set to `true` will effectively append the " - {fd}" format to the representation.
+     * \return The string representation of a peer connection with the following format:
+     *     <ip>:<port> [ - <fd>]
      */
-    std::string str() const;
+    std::string str(bool include_fd = true) const;
   };
 
   using ConnectionHandler = std::function<void(PeerConnection &)>;

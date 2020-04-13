@@ -73,7 +73,7 @@ bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
   return true;
 }
 
-std::string TcpServer::PeerConnection::str() const
+std::string TcpServer::PeerConnection::str(bool include_fd) const
 {
   static constexpr std::size_t port_strlen = 8;
 
@@ -91,7 +91,12 @@ std::string TcpServer::PeerConnection::str() const
   }
 
   std::stringstream address;
-  address << hostbuf << " " << portbuf << " - " << fd;
+  address << hostbuf << " " << portbuf;
+
+  if (include_fd)
+  {
+    address << " - " << fd;
+  }
 
   return address.str();
 }
