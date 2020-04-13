@@ -22,12 +22,16 @@ class Receive : public microloop::EventSource, public microloop::TypeHelper<micr
 public:
   static const std::uint32_t DEFAULT_MAX_READ_SIZE = 4096;  // The default page size on many systems
 
-  Receive(std::uint32_t sock, Callback &&on_recv,
+  Receive(std::uint32_t sock, 
       std::uint32_t max_read_size = Receive::DEFAULT_MAX_READ_SIZE) :
       EventSource{sock},
-      on_recv{std::move(on_recv)},
       max_read_size{max_read_size}
   {}
+
+  void set_on_recv(Callback &&on_recv)
+  {
+    this->on_recv = std::move(on_recv);
+  }
 
   std::uint32_t produced_events() const override
   {

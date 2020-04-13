@@ -36,9 +36,9 @@ struct BasicHttpServer
 
   void on_conn(net::TcpServer::PeerConnection &conn)
   {
-    if (clients_.find(conn.fd) == clients_.end())
+    if (clients_.find(conn.fd()) == clients_.end())
     {
-      clients_[conn.fd] = microhttp::http::RequestParser();
+      clients_[conn.fd()] = microhttp::http::RequestParser();
     }
   }
 
@@ -46,13 +46,15 @@ struct BasicHttpServer
   {
     if (buf.empty())
     {
-      conn.close();
+      clients_.erase(conn.fd());
+      server_.close_conn(conn);
+
       return;
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    auto &parser = clients_[conn.fd];
+    auto &parser = clients_[conn.fd()];
     parser.add_chunk(buf);
 
     microloop::Buffer content{
@@ -70,9 +72,9 @@ struct BasicHttpServer
     std::chrono::duration<double, std::milli> dur_ms{t2 - t1};
 
     std::cout << "[" << conn.str() << "] " << request.get_http_method() << " " << request.get_uri()
-              << "- " << dur_ms.count() << "ms\n";
+              << " - " << dur_ms.count() << "ms\n";
 
-    clients_[conn.fd].reset();
+    clients_[conn.fd()].reset();
   }
 
   void run()

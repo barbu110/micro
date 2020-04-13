@@ -69,7 +69,6 @@ void EventLoop::remove_event_source(EventSource *event_source)
   }
 
   event_sources.erase(event_source->get_fd());
-  delete event_source;
 }
 
 bool EventLoop::next_tick()

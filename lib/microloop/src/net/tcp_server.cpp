@@ -18,13 +18,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <functional>
 
 namespace microloop::net
 {
 
 void TcpServer::PeerConnection::close()
 {
-  if (::close(fd) == -1)
+  EventLoop::instance().remove_event_source(event_source_);
+  event_source_ = nullptr;
+  
+  if (::close(fd_) == -1)
   {
     throw microloop::KernelException(errno, __PRETTY_FUNCTION__);
   }
@@ -37,7 +41,7 @@ bool TcpServer::PeerConnection::send(const microloop::Buffer &buf)
   while (total_sent != buf.size())
   {
     const std::uint8_t *data = static_cast<const std::uint8_t *>(buf.data());
-    ssize_t nsent = ::send(fd, data + total_sent, buf.size() - total_sent, 0);
+    ssize_t nsent = ::send(fd_, data + total_sent, buf.size() - total_sent, 0);
     if (nsent == -1)
     {
       /*
@@ -61,13 +65,12 @@ bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
     return false;
   }
 
-  struct stat stat_buf
-  {};
+  struct stat stat_buf{};
   off_t offset = 0;
 
   fstat(read_fd, &stat_buf);
 
-  sendfile(fd, read_fd, &offset, stat_buf.st_size);
+  sendfile(fd_, read_fd, &offset, stat_buf.st_size);
   ::close(read_fd);
 
   return true;
@@ -80,7 +83,7 @@ std::string TcpServer::PeerConnection::str(bool include_fd) const
   char hostbuf[INET6_ADDRSTRLEN]{};
   char portbuf[port_strlen]{};
 
-  auto err_code = getnameinfo(reinterpret_cast<const sockaddr *>(&addr), addrlen, hostbuf,
+  auto err_code = getnameinfo(reinterpret_cast<const sockaddr *>(&addr_), addrlen_, hostbuf,
       sizeof(hostbuf), portbuf, sizeof(portbuf), NI_NUMERICHOST | NI_NUMERICSERV);
   if (err_code != 0)
   {
@@ -91,11 +94,11 @@ std::string TcpServer::PeerConnection::str(bool include_fd) const
   }
 
   std::stringstream address;
-  address << hostbuf << " " << portbuf;
+  address << hostbuf << ":" << portbuf;
 
   if (include_fd)
   {
-    address << " - " << fd;
+    address << " - " << fd_;
   }
 
   return address.str();
@@ -193,16 +196,26 @@ void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, sockl
   using microloop::event_sources::net::Receive;
   using namespace std::placeholders;
 
-  auto [it, inserted] = peer_connections.try_emplace(fd, addr, addrlen, fd);
+  auto [it, inserted] = peer_connections.try_emplace(fd, this, addr, addrlen, fd);
   if (!inserted)
   {
     throw std::runtime_error("a connection with the same file descriptor already exists");
   }
+ 
+  auto &peer_conn = it->second;
+  auto event_source = new Receive<false>(fd);
+  
+  peer_conn.event_source_ = event_source;
+  event_source->set_on_recv(std::bind(on_data, std::ref(peer_conn), _1));
 
-  EventLoop::instance().add_event_source(
-      new Receive<false>(fd, std::bind(on_data, it->second, _1)));
+  EventLoop::instance().add_event_source(event_source);
 
-  on_conn(it->second);
+  on_conn(peer_conn);
+}
+
+void TcpServer::close_conn(TcpServer::PeerConnection &conn)
+{
+  peer_connections.erase(conn.fd());
 }
 
 }  // namespace microloop::net

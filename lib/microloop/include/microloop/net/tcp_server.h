@@ -22,23 +22,19 @@ namespace microloop::net
 class TcpServer
 {
 public:
-  struct PeerConnection
+  class PeerConnection
   {
-    TcpServer *server;
-    sockaddr_storage addr;
-    socklen_t addrlen;
-    std::uint32_t fd;
-
-    PeerConnection(sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
-        addr{addr}, addrlen{addrlen}, fd{fd}
+  public:
+    PeerConnection(TcpServer *server, sockaddr_storage addr, socklen_t addrlen, std::uint32_t fd) :
+        server_{server}, addr_{addr}, addrlen_{addrlen}, fd_{fd}
     {}
 
-    // PeerConnection does not have a destructor due to its shared ownership of the file descriptor.
+    PeerConnection(const PeerConnection &) = delete;
 
-    /**
-     * Close this connection.
-     */
-    void close();
+    ~PeerConnection()
+    {
+      close();
+    }
 
     /**
      * Send a buffer to the peer socket of this connection.
@@ -64,6 +60,31 @@ public:
      *     <ip>:<port> [ - <fd>]
      */
     std::string str(bool include_fd = true) const;
+
+    std::uint32_t fd() const
+    {
+      return fd_;
+    }
+
+    auto addr() const
+    {
+      return std::make_pair(addr_, addrlen_);
+    }
+
+  private:
+    /**
+     * \brief Close this connection.
+     */
+    void close();
+
+  private:
+    friend class TcpServer;
+
+    TcpServer *server_;
+    microloop::EventSource *event_source_ = nullptr;
+    sockaddr_storage addr_;
+    socklen_t addrlen_;
+    std::uint32_t fd_;
   };
 
   using ConnectionHandler = std::function<void(PeerConnection &)>;
@@ -89,6 +110,14 @@ public:
     auto bound = std::bind(std::forward<Func>(func), std::forward<Args>(args)..., _1, _2);
     on_data = std::move(bound);
   }
+
+  /**
+   * \brief Close the given connection.
+   *
+   * This will invalidate any existing reference to that connection. Users of this API must make
+   * sure to consider this connection destroyed from this point on.
+   */
+  void close_conn(PeerConnection &conn); 
 
 private:
   /**
