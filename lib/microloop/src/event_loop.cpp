@@ -85,6 +85,7 @@ bool EventLoop::next_tick()
   {
     auto &event = events_list[i];
     auto event_source = reinterpret_cast<EventSource *>(event.data.ptr);
+    auto fd = event_source->get_fd();
     auto delete_event_source = false;
     if (event_source->produced_events() & EPOLLONESHOT)
     {
@@ -98,7 +99,16 @@ bool EventLoop::next_tick()
      */
     event_source->run_callback();
 
-    if (event_source->get_fd() == signals_monitor_fd_)
+    if (event_sources.find(fd) == event_sources.end())
+    {
+      /*
+       * The callback of an event source can lead to its removal from the event loop, so we must
+       * be cautious not to read deallocated memory.
+       */
+      continue;
+    }
+
+    if (fd == signals_monitor_fd_)
     {
       if (signals_monitor().can_exit())
       {
