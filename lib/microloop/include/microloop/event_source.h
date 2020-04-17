@@ -8,6 +8,7 @@
 #include <functional>
 #include <sys/epoll.h>
 #include <tuple>
+#include <utility>
 
 namespace microloop
 {
@@ -27,6 +28,11 @@ protected:
   void set_return_object(ReturnType &&obj)
   {
     return_object = obj;  // TODO Should we std::move(obj)?
+  }
+
+  void set_return_object(ReturnTypeParams &&... params)
+  {
+    return_object = std::make_tuple(std::forward<ReturnTypeParams>(params)...);
   }
 
   const ReturnType &get_return_object() const
