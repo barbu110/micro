@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "microloop/buffer.h"
 #include "microhttp/status_codes.h"
+#include "microloop/buffer.h"
 
 namespace microhttp::http
 {

@@ -56,8 +56,7 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
 
     switch (state)
     {
-    case WAITING_START_LINE:
-    {
+    case WAITING_START_LINE: {
       auto start_line = parse_start_line(line);
       if (!start_line)
       {
@@ -72,8 +71,7 @@ void RequestParser::add_chunk(const microloop::Buffer &buf)
       state = WAITING_HEADER_LINE;
       break;
     }
-    case WAITING_HEADER_LINE:
-    {
+    case WAITING_HEADER_LINE: {
       if (crlf_idx == 0)
       {
         state = WAITING_BODY;

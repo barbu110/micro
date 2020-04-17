@@ -117,7 +117,7 @@ public:
    * This will invalidate any existing reference to that connection. Users of this API must make
    * sure to consider this connection destroyed from this point on.
    */
-  void close_conn(PeerConnection &conn); 
+  void close_conn(PeerConnection &conn);
 
 private:
   /**

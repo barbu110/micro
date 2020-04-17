@@ -2,10 +2,10 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "gtest/gtest.h"
-
 #include "microhttp/http_request.h"
 #include "microhttp/version.h"
+
+#include "gtest/gtest.h"
 
 namespace microhttp::http
 {
@@ -52,4 +52,4 @@ TEST(HttpRequest, GetContentLength)
   EXPECT_EQ(128, *content_length);
 }
 
-}
+}  // namespace microhttp::http

@@ -11,7 +11,7 @@ HttpRequest::HttpRequest() : http_version{1, 1}
 {}
 
 HttpRequest::HttpRequest(std::string http_method, std::string uri) :
-  http_version{1, 1}, http_method{http_method}, uri{uri}
+    http_version{1, 1}, http_method{http_method}, uri{uri}
 {}
 
-}
+}  // namespace microhttp::http

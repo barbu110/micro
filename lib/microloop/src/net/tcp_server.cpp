@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <functional>
 #include <netdb.h>
 #include <sstream>
 #include <stdexcept>
@@ -18,7 +19,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <functional>
 
 namespace microloop::net
 {
@@ -27,7 +27,7 @@ void TcpServer::PeerConnection::close()
 {
   EventLoop::instance().remove_event_source(event_source_);
   event_source_ = nullptr;
-  
+
   if (::close(fd_) == -1)
   {
     throw microloop::KernelException(errno, __PRETTY_FUNCTION__);
@@ -65,7 +65,8 @@ bool TcpServer::PeerConnection::send_file(const std::filesystem::path &path)
     return false;
   }
 
-  struct stat stat_buf{};
+  struct stat stat_buf
+  {};
   off_t offset = 0;
 
   fstat(read_fd, &stat_buf);
@@ -146,7 +147,7 @@ std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
   for (; r != nullptr; r = r->ai_next)
   {
     fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-    if (fd < -1)
+    if (fd < 0)
     {
       continue;
     }
@@ -201,10 +202,10 @@ void TcpServer::handle_connection(std::uint32_t fd, sockaddr_storage addr, sockl
   {
     throw std::runtime_error("a connection with the same file descriptor already exists");
   }
- 
+
   auto &peer_conn = it->second;
   auto event_source = new Receive<false>(fd);
-  
+
   peer_conn.event_source_ = event_source;
   event_source->set_on_recv(std::bind(on_data, std::ref(peer_conn), _1));
 

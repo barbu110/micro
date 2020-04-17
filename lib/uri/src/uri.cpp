@@ -48,16 +48,9 @@ optional<Uri> from_string(string str, bool normalized) noexcept
     return std::nullopt;
   }
 
-  Uri wrapper{
-    from_range(uri.scheme),
-    from_range(uri.userInfo),
-    from_range(uri.hostText),
-    from_range(uri.portText),
-    from_path_list(uri.pathHead, uri.pathTail),
-    from_range(uri.query),
-    from_range(uri.fragment),
-    static_cast<bool>(uri.absolutePath)
-  };
+  Uri wrapper{from_range(uri.scheme), from_range(uri.userInfo), from_range(uri.hostText),
+      from_range(uri.portText), from_path_list(uri.pathHead, uri.pathTail), from_range(uri.query),
+      from_range(uri.fragment), static_cast<bool>(uri.absolutePath)};
 
   uriFreeUriMembersA(&uri);
 
@@ -92,8 +85,6 @@ void Uri::path(std::string_view value)
 }
 
 string Uri::to_string() const noexcept
-{
-  
-}
+{}
 
-}
+}  // namespace micro::uri::detail

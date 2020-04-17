@@ -20,8 +20,7 @@ Buffer::Buffer(std::size_t count) : data_{nullptr}, size_{count}
   }
 }
 
-Buffer::Buffer(const char *str, std::size_t count) :
-    Buffer{std::min(std::strlen(str), count)}
+Buffer::Buffer(const char *str, std::size_t count) : Buffer{std::min(std::strlen(str), count)}
 {
   if (size_)
   {

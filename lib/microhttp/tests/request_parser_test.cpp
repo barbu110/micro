@@ -2,17 +2,16 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "gtest/gtest.h"
-
 #include "microhttp/http_request.h"
 #include "microhttp/request_parser.h"
 #include "microhttp/version.h"
 #include "microloop/buffer.h"
 
-#include <string>
-#include <vector>
-#include <utility>
+#include "gtest/gtest.h"
 #include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace microhttp::http
 {
@@ -37,7 +36,7 @@ std::vector<RequestTestProvider> request_parser_provider()
 
   {
     std::vector<microloop::Buffer> chunks = {
-      "GET / HTTP/1.1\r\n",
+        "GET / HTTP/1.1\r\n",
     };
 
     HttpRequest expected_request{"get", "/"};
@@ -48,8 +47,8 @@ std::vector<RequestTestProvider> request_parser_provider()
 
   {
     std::vector<microloop::Buffer> chunks{
-      "GET / ",
-      "HTTP/1.1\r\n",
+        "GET / ",
+        "HTTP/1.1\r\n",
     };
 
     HttpRequest expected_request{"get", "/"};
@@ -60,8 +59,8 @@ std::vector<RequestTestProvider> request_parser_provider()
 
   {
     std::vector<microloop::Buffer> chunks = {
-      "POST /foo HTTP/1.1\r\n",
-      "Content-Length: 0\r\n\r\n",
+        "POST /foo HTTP/1.1\r\n",
+        "Content-Length: 0\r\n\r\n",
     };
 
     HttpRequest expected_request{"post", "/foo"};
@@ -72,11 +71,8 @@ std::vector<RequestTestProvider> request_parser_provider()
   }
 
   {
-    std::vector<microloop::Buffer> chunks = {
-      "POST /foo HTTP/1.1\r\n",
-      "Content-Length: 7\r\n\r\n",
-      "example"
-    };
+    std::vector<microloop::Buffer> chunks
+        = {"POST /foo HTTP/1.1\r\n", "Content-Length: 7\r\n\r\n", "example"};
 
     HttpRequest expected_request{"post", "/foo"};
     expected_request.set_header("Content-Length", "7");
@@ -88,9 +84,8 @@ std::vector<RequestTestProvider> request_parser_provider()
 
   {
     std::vector<microloop::Buffer> chunks = {
-      "POST /foo HTTP/1.1\r\n",
-      "Content-Length: 7\r\n",
-      "\r\nexample", /* note the CRLF before the body is in the same chunk with the body itself */
+        "POST /foo HTTP/1.1\r\n", "Content-Length: 7\r\n",
+        "\r\nexample", /* note the CRLF before the body is in the same chunk with the body itself */
     };
 
     HttpRequest expected_request{"post", "/foo"};
@@ -131,10 +126,6 @@ TEST_P(RequestParserTest, ParseRequest)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
-  Http,
-  RequestParserTest,
-  testing::ValuesIn(request_parser_provider())
-);
+INSTANTIATE_TEST_CASE_P(Http, RequestParserTest, testing::ValuesIn(request_parser_provider()));
 
-}
+}  // namespace microhttp::http

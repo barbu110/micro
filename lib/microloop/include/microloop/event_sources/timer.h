@@ -53,9 +53,7 @@ class TimerController
 {
 public:
   TimerController(BaseTimer *timer, microloop::EventLoop *event_loop) :
-      timer{timer},
-      event_loop{event_loop},
-      start_time{std::chrono::high_resolution_clock::now()}
+      timer{timer}, event_loop{event_loop}, start_time{std::chrono::high_resolution_clock::now()}
   {}
 
   /**

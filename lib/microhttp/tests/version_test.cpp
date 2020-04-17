@@ -2,10 +2,9 @@
 // Copyright (c) 2019 by Victor Barbu. All Rights Reserved.
 //
 
-#include "gtest/gtest.h"
-
 #include "microhttp/version.h"
 
+#include "gtest/gtest.h"
 #include <map>
 #include <string>
 #include <vector>

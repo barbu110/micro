@@ -140,10 +140,10 @@ TEST(Buffer, RemoveSuffix)
 TEST(Buffer, Comparison)
 {
   std::vector<std::tuple<microloop::Buffer, microloop::Buffer, bool>> cases = {
-    std::make_tuple("", "", true),
-    std::make_tuple("a", "a", true),
-    std::make_tuple("", "a", false),
-    std::make_tuple("a", "b", false),
+      std::make_tuple("", "", true),
+      std::make_tuple("a", "a", true),
+      std::make_tuple("", "a", false),
+      std::make_tuple("a", "b", false),
   };
 
   for (const auto &t : cases)

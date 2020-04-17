@@ -13,4 +13,4 @@ static constexpr auto &crlf = "\r\n";
 // FIXME How to get this from "crlf"?
 static constexpr auto crlf_size = 2;
 
-}
+}  // namespace microhttp::http::constants

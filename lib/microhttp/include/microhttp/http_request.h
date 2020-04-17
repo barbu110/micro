@@ -8,11 +8,11 @@
 #include "microloop/buffer.h"
 
 #include <algorithm>
-#include <map>
-#include <string>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
+#include <map>
 #include <optional>
+#include <string>
 
 namespace microhttp::http
 {
