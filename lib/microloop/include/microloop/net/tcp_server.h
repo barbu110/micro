@@ -119,6 +119,17 @@ public:
    */
   void close_conn(PeerConnection &conn);
 
+  /**
+   * \brief Get the file descriptor of the TCP server.
+   *
+   * This can be used to get low-level access to the server in order to retrieve or change socket
+   * parameters.
+   */
+  std::uint32_t fd() const
+  {
+    return fd_;
+  }
+
 private:
   /**
    * Create a passive socket listening on an unspecified address on either IPv4 or IPv6 on the
@@ -138,6 +149,7 @@ private:
 
 private:
   std::uint16_t port;
+  std::uint32_t fd_;
 
   std::map<std::uint32_t, PeerConnection> peer_connections;
 

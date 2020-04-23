@@ -123,6 +123,8 @@ TcpServer::TcpServer(std::uint16_t port) : port{port}
      */
     return true;
   });
+
+  fd_ = server_fd;
 }
 
 std::uint32_t TcpServer::create_passive_socket(std::uint16_t port)
